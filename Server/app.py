@@ -5,13 +5,20 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from models import db, FoodItem, Category
 from sqlalchemy import text
+from openai import OpenAI
+from dotenv import load_dotenv
 
+load_dotenv()
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 app = Flask(__name__)
 CORS(app)
 
 # The Connection String: Tells SQLAlchemy exactly where the Docker DB is
 # Format: postgresql://username:password@host:port/database_name
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://admin:secretpassword@localhost:5432/hospital_system'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+    'DATABASE_URL',
+    'postgresql://admin:secretpassword@localhost:5432/hospital_system'
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Setup Upload Folder
@@ -85,7 +92,7 @@ def upload_image():
         file.save(file_path)
         
         # Return the absolute URL pointing to this Flask server
-        image_url = f"http://localhost:5000/uploads/{unique_filename}"
+        image_url = f"{request.host_url}uploads/{unique_filename}"
         return jsonify({"imageUrl": image_url}), 200
 
 # ================= Products API =================
