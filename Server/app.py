@@ -357,6 +357,9 @@ def run_migrations():
         db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS allergy_notes TEXT;"))
         db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS forbidden_for VARCHAR(200);"))
 
+        # Add texture_id column if it doesn't exist
+        db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS texture_id INTEGER REFERENCES textures(id);"))
+
         # Nutrition vector and openai embedding
         # db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS nutrition_vector vector(6);"))
         # db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS openai_embedding vector(1536);"))
