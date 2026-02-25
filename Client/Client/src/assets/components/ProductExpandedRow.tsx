@@ -57,7 +57,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
     data.append("image", file);
 
     try {
-      const res = await fetch("http://localhost:5000/api/upload", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/upload`, {
         method: "POST",
         body: data,
       });

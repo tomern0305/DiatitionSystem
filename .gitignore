@@ -7,3 +7,4 @@ dist
 coverage
 
 Server/.env
+Client/Client/.env

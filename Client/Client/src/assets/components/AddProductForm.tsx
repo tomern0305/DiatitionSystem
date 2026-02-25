@@ -31,7 +31,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/categories")
+    fetch(`${import.meta.env.VITE_API_URL}/api/categories`)
       .then((res) => res.json())
       .then((data) => {
         setCategories(data);
@@ -62,7 +62,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     data.append("image", file);
 
     try {
-      const res = await fetch("http://localhost:5000/api/upload", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/upload`, {
         method: "POST",
         body: data,
       });
@@ -79,7 +79,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetch("http://localhost:5000/api/products", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/products`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

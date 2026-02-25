@@ -39,11 +39,11 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
 
   useEffect(() => {
     Promise.all([
-      fetch("http://localhost:5000/api/products").then((res) => {
+      fetch(`${import.meta.env.VITE_API_URL}/api/products`).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch products");
         return res.json();
       }),
-      fetch("http://localhost:5000/api/categories").then((res) => {
+      fetch(`${import.meta.env.VITE_API_URL}/api/categories`).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch categories");
         return res.json();
       }),

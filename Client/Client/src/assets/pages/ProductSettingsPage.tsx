@@ -41,11 +41,11 @@ const ProductSettingsPage = ({
   const fetchData = () => {
     setLoading(true);
     Promise.all([
-      fetch("http://localhost:5000/api/products").then((res) => {
+      fetch(`${import.meta.env.VITE_API_URL}/api/products`).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch products");
         return res.json();
       }),
-      fetch("http://localhost:5000/api/categories").then((res) => {
+      fetch(`${import.meta.env.VITE_API_URL}/api/categories`).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch categories");
         return res.json();
       }),
@@ -71,11 +71,14 @@ const ProductSettingsPage = ({
   };
 
   const handleProductUpdate = async (id: string, updatedData: any) => {
-    const res = await fetch(`http://localhost:5000/api/products/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedData),
-    });
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/products/${id}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedData),
+      },
+    );
     if (!res.ok) {
       const error = await res.json();
       alert(`שגיאה בעדכון מוצר: ${error.error}`);
@@ -85,9 +88,12 @@ const ProductSettingsPage = ({
   };
 
   const handleProductDelete = async (id: string) => {
-    const res = await fetch(`http://localhost:5000/api/products/${id}`, {
-      method: "DELETE",
-    });
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/products/${id}`,
+      {
+        method: "DELETE",
+      },
+    );
     if (!res.ok) {
       const error = await res.json();
       alert(`שגיאה במחיקת מוצר: ${error.error}`);

@@ -24,7 +24,7 @@ const CategorySettingsPage = ({
 
   const fetchCategories = () => {
     setLoading(true);
-    fetch("http://localhost:5000/api/categories")
+    fetch(`${import.meta.env.VITE_API_URL}/api/categories`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch categories");
         return res.json();
@@ -45,11 +45,14 @@ const CategorySettingsPage = ({
 
   const handleAddSubmit = async (name: string) => {
     try {
-      const res = await fetch("http://localhost:5000/api/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/categories`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.trim() }),
+        },
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to add category");
 
@@ -62,11 +65,14 @@ const CategorySettingsPage = ({
 
   const handleEditSubmit = async (id: number, name: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/categories/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/categories/${id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.trim() }),
+        },
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update category");
 
@@ -80,9 +86,12 @@ const CategorySettingsPage = ({
     if (!window.confirm("האם אתה בטוח שברצונך למחוק קטגוריה זו?")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/categories/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/categories/${id}`,
+        {
+          method: "DELETE",
+        },
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete category");
 
