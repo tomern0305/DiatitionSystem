@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import ProductBig from "../components/ProductBig";
 import TopBar from "../components/TopBar";
-import type { Allergen } from "../components/ProductBig";
 
 export interface ProductData {
   id: string;
@@ -15,8 +14,8 @@ export interface ProductData {
   fat: number;
   sugares: number;
   sodium: number;
-  contains?: Allergen[];
-  mayContain?: Allergen[];
+  contains?: string[];
+  mayContain?: string[];
   texture?: string;
   properties?: string[];
 }
