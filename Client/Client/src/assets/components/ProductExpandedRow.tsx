@@ -3,6 +3,7 @@ import type { ProductData } from "../pages/ProductSettingsPage";
 import type {
   CategoryData,
   SensitivityData,
+  TextureData,
 } from "../pages/CategorySettingsPage";
 
 interface ProductExpandedRowProps {
@@ -34,19 +35,30 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
     sodium: product.sodium || 0,
     contains: product.contains || ([] as string[]),
     mayContain: product.mayContain || [],
+    texture_id: product.texture_id || 0,
+    company: product.company || "",
     properties: product.properties || [],
   });
 
   const [sensitivities, setSensitivities] = useState<SensitivityData[]>([]);
+  const [textures, setTextures] = useState<TextureData[]>([]);
   const [saving, setSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    if (isEditing && sensitivities.length === 0) {
-      fetch(`${import.meta.env.VITE_API_URL}/api/sensitivities`)
-        .then((res) => res.json())
-        .then((data) => setSensitivities(data))
-        .catch((err) => console.error("Error fetching sensitivities:", err));
+    if (isEditing) {
+      if (sensitivities.length === 0) {
+        fetch(`${import.meta.env.VITE_API_URL}/api/sensitivities`)
+          .then((res) => res.json())
+          .then((data) => setSensitivities(data))
+          .catch((err) => console.error("Error fetching sensitivities:", err));
+      }
+      if (textures.length === 0) {
+        fetch(`${import.meta.env.VITE_API_URL}/api/texture`)
+          .then((res) => res.json())
+          .then((data) => setTextures(data))
+          .catch((err) => console.error("Error fetching textures:", err));
+      }
     }
   }, [isEditing]);
 
@@ -216,6 +228,12 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             </div>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2 md:col-span-4 mt-2">
+            <div className="text-gray-500 text-sm mb-1">טקסטורה מוגדרת</div>
+            <div className="text-lg font-bold text-gray-800">
+              {product.texture || "ללא טקסטורה מוגדרת"}
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2 md:col-span-4 mt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <div className="text-gray-500 text-sm mb-2">
@@ -230,7 +248,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
                     product.contains.map((sens, idx) => (
                       <span
                         key={idx}
-                        className="bg-indigo-50 text-indigo-700 text-sm px-3 py-1 rounded-full font-medium border border-indigo-100"
+                        className="bg-red-50 text-red-700 text-sm px-3 py-1 rounded-full font-medium border border-red-100"
                       >
                         {sens}
                       </span>
@@ -307,6 +325,37 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            חברה / מותג
+          </label>
+          <input
+            type="text"
+            name="company"
+            value={formData.company}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+            placeholder="לדוג': תנובה, שטראוס..."
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            טקסטורה
+          </label>
+          <select
+            name="texture_id"
+            value={formData.texture_id}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+          >
+            <option value={0}>ללא טקסטורה מוגדרת</option>
+            {textures.map((txt) => (
+              <option key={txt.id} value={txt.id}>
+                {txt.name}
               </option>
             ))}
           </select>

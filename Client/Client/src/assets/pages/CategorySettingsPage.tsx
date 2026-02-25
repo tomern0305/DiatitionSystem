@@ -4,6 +4,8 @@ import AddCategoryForm from "../components/AddCategoryForm";
 import CategoryRow from "../components/CategoryRow";
 import AddSensitivityForm from "../components/AddSensitivityForm";
 import SensitivityRow from "../components/SensitivityRow";
+import AddTextureForm from "../components/AddTextureForm";
+import TextureRow from "../components/TextureRow";
 
 export interface CategoryData {
   id: number;
@@ -11,6 +13,11 @@ export interface CategoryData {
 }
 
 export interface SensitivityData {
+  id: number;
+  name: string;
+}
+
+export interface TextureData {
   id: number;
   name: string;
 }
@@ -24,16 +31,20 @@ const CategorySettingsPage = ({
 }: CategorySettingsPageProps) => {
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [sensitivities, setSensitivities] = useState<SensitivityData[]>([]);
+  const [textures, setTextures] = useState<TextureData[]>([]);
 
   const [loadingCats, setLoadingCats] = useState(true);
   const [loadingSens, setLoadingSens] = useState(true);
+  const [loadingTextures, setLoadingTextures] = useState(true);
 
   const [errorCats, setErrorCats] = useState<string | null>(null);
   const [errorSens, setErrorSens] = useState<string | null>(null);
+  const [errorTextures, setErrorTextures] = useState<string | null>(null);
 
   // Form State
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [isAddingSensitivity, setIsAddingSensitivity] = useState(false);
+  const [isAddingTexture, setIsAddingTexture] = useState(false);
 
   const fetchCategories = () => {
     setLoadingCats(true);
@@ -69,9 +80,27 @@ const CategorySettingsPage = ({
       });
   };
 
+  const fetchTextures = () => {
+    setLoadingTextures(true);
+    fetch(`${import.meta.env.VITE_API_URL}/api/texture`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch textures");
+        return res.json();
+      })
+      .then((data) => {
+        setTextures(data);
+        setLoadingTextures(false);
+      })
+      .catch((err) => {
+        setErrorTextures(err.message);
+        setLoadingTextures(false);
+      });
+  };
+
   useEffect(() => {
     fetchCategories();
     fetchSensitivities();
+    fetchTextures();
   }, []);
 
   // --- Category Handlers ---
@@ -195,16 +224,72 @@ const CategorySettingsPage = ({
     }
   };
 
-  if (loadingCats || loadingSens)
+  // --- Texture Handlers ---
+  const handleAddTextureSubmit = async (name: string) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/texture`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add texture");
+
+      setIsAddingTexture(false);
+      fetchTextures();
+    } catch (err: any) {
+      alert(`שגיאה בהוספת טקסטורה: ${err.message}`);
+    }
+  };
+
+  const handleEditTextureSubmit = async (id: number, name: string) => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/texture/${id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.trim() }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update texture");
+
+      fetchTextures();
+    } catch (err: any) {
+      alert(`שגיאה בעדכון טקסטורה: ${err.message}`);
+    }
+  };
+
+  const handleDeleteTexture = async (id: number) => {
+    if (!window.confirm("האם אתה בטוח שברצונך למחוק טקסטורה זו?")) return;
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/texture/${id}`,
+        {
+          method: "DELETE",
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete texture");
+
+      fetchTextures();
+    } catch (err: any) {
+      alert(`לא ניתן למחוק: ${err.message}`);
+    }
+  };
+
+  if (loadingCats || loadingSens || loadingTextures)
     return (
       <div className="p-8 text-center" dir="rtl">
         טוען נתונים...
       </div>
     );
-  if (errorCats || errorSens)
+  if (errorCats || errorSens || errorTextures)
     return (
       <div className="p-8 text-center text-red-500" dir="rtl">
-        שגיאה: {errorCats || errorSens}
+        שגיאה: {errorCats || errorSens || errorTextures}
       </div>
     );
 
@@ -216,7 +301,7 @@ const CategorySettingsPage = ({
       <div className="w-full mx-auto space-y-8">
         <TopBar title="ניהול משתנים" setIsSideMenuOpen={setIsSideMenuOpen} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
           {/* Section 1: Categories */}
           <div className="space-y-4">
             <div className="flex justify-between items-center px-2">
@@ -315,6 +400,58 @@ const CategorySettingsPage = ({
                     <tr>
                       <td colSpan={3} className="p-8 text-center text-gray-500">
                         אין רגישויות או אלרגיות.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Section 3: Textures */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center px-2">
+              <h2 className="text-xl font-bold text-gray-800">טקסטורות מנות</h2>
+              <button
+                onClick={() => setIsAddingTexture(!isAddingTexture)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm"
+              >
+                {isAddingTexture ? "ביטול" : "הוסף טקסטורה"}
+              </button>
+            </div>
+
+            {isAddingTexture && (
+              <AddTextureForm onAdd={handleAddTextureSubmit} />
+            )}
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+              <table className="w-full text-right border-collapse min-w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="p-4 font-bold text-gray-600 text-sm">
+                      מזהה
+                    </th>
+                    <th className="p-4 font-bold text-gray-600 text-sm w-full">
+                      שם הטקסטורה
+                    </th>
+                    <th className="p-4 font-bold text-gray-600 text-sm text-center">
+                      פעולות
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {textures.map((texture) => (
+                    <TextureRow
+                      key={texture.id}
+                      texture={texture}
+                      onEdit={handleEditTextureSubmit}
+                      onDelete={handleDeleteTexture}
+                    />
+                  ))}
+                  {textures.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="p-8 text-center text-gray-500">
+                        אין טקסטורות לבחירה.
                       </td>
                     </tr>
                   )}

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import type { SensitivityData } from "../pages/CategorySettingsPage";
+import type {
+  SensitivityData,
+  TextureData,
+} from "../pages/CategorySettingsPage";
 
 export interface CategoryData {
   id: number;
@@ -28,9 +31,12 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     sodium: 0,
     contains: [] as string[],
     mayContain: [] as string[],
+    texture_id: 0,
+    company: "",
   });
 
   const [categories, setCategories] = useState<CategoryData[]>([]);
+  const [textures, setTextures] = useState<TextureData[]>([]);
   const [sensitivities, setSensitivities] = useState<SensitivityData[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -42,10 +48,14 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       fetch(`${import.meta.env.VITE_API_URL}/api/sensitivities`).then((res) =>
         res.json(),
       ),
+      fetch(`${import.meta.env.VITE_API_URL}/api/texture`).then((res) =>
+        res.json(),
+      ),
     ])
-      .then(([catsData, sensData]) => {
+      .then(([catsData, sensData, textData]) => {
         setCategories(catsData);
         setSensitivities(sensData);
+        setTextures(textData);
         if (catsData.length > 0) {
           setFormData((prev) => ({ ...prev, category_id: catsData[0].id }));
         }
@@ -140,6 +150,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
           sodium: 0,
           contains: [],
           mayContain: [],
+          texture_id: 0,
+          company: "",
         });
         onProductAdded();
       })
@@ -191,6 +203,39 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            שם חברה / מותג
+          </label>
+          <input
+            type="text"
+            name="company"
+            value={formData.company}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 p-2 rounded-md"
+            placeholder="לדוגמא: טרה, תנובה..."
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            טקסטורת מנה
+          </label>
+          <select
+            name="texture_id"
+            value={formData.texture_id}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 p-2 rounded-md"
+          >
+            <option value={0}>ללא טקסטורה מוגדרת</option>
+            {textures.map((txt) => (
+              <option key={txt.id} value={txt.id}>
+                {txt.name}
               </option>
             ))}
           </select>

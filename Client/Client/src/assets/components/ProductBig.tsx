@@ -1,24 +1,3 @@
-export type Allergen =
-  | "gluten"
-  | "milk"
-  | "eggs"
-  | "soy"
-  | "sesame"
-  | "nuts"
-  | "peanuts"
-  | "fish";
-
-const ALLERGEN_HEBREW_MAP: Record<Allergen, string> = {
-  gluten: "גלוטן",
-  milk: "חלב",
-  eggs: "ביצים",
-  soy: "סויה",
-  sesame: "שומשום",
-  nuts: "אגוזים",
-  peanuts: "בוטנים",
-  fish: "דגים",
-};
-
 interface ProductBigProps {
   image: string;
   name: string;
@@ -29,8 +8,9 @@ interface ProductBigProps {
   fat: number;
   sugares: number;
   sodium: number;
-  contains?: Allergen[];
-  mayContain?: Allergen[];
+  contains?: string[];
+  mayContain?: string[];
+  texture?: string | null;
   properties?: string[];
   state?: "regular" | "selected" | "disabled";
 }
@@ -47,6 +27,7 @@ const ProductBig = ({
   sodium,
   contains = [],
   mayContain = [],
+  texture,
   properties = [],
   state = "regular",
 }: ProductBigProps) => {
@@ -99,23 +80,32 @@ const ProductBig = ({
           mayContain.length > 0 ||
           properties.length > 0) && (
           <div className="flex flex-wrap gap-1 mb-3 mt-0.5">
-            {contains.map((allergen, index) => (
+            {texture && (
+              <span className="bg-blue-50/80 text-blue-600 border border-blue-100 text-[9px] font-semibold px-1.5 py-0.5 rounded-md flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] leading-none">
+                מרקם {texture}
+              </span>
+            )}
+
+            {contains.map((allergen) => (
               <span
-                key={`contains-${index}`}
+                key={`contains-${allergen}`}
                 className="bg-red-50/80 text-red-600 border border-red-100 text-[9px] font-semibold px-1.5 py-0.5 rounded-md flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] leading-none"
               >
-                מכיל {ALLERGEN_HEBREW_MAP[allergen]}
+                מכיל {allergen}
               </span>
             ))}
 
-            {mayContain.map((allergen, index) => (
+            {mayContain.map((allergen) => (
               <span
-                key={`maycontain-${index}`}
+                key={`maycontain-${allergen}`}
                 className="bg-orange-50/80 text-orange-600 border border-orange-100 text-[9px] font-semibold px-1.5 py-0.5 rounded-md flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] leading-none"
               >
-                עלול להכיל {ALLERGEN_HEBREW_MAP[allergen]}
+                עלול להכיל {allergen}
               </span>
             ))}
+            {/* turned off the properties for now, but we can print them if needed we 
+                just dont have a way to enter them in the settings page as of now
+                i dont know if we need them */}
 
             {/* {properties.map((prop, index) => (
               <span

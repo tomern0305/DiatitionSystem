@@ -18,6 +18,9 @@ export interface ProductData {
   sodium: number;
   contains?: string[];
   mayContain?: string[];
+  texture?: string;
+  texture_id?: number;
+  company?: string;
   properties?: string[];
   lastEditDate: Date;
 }
@@ -184,6 +187,7 @@ const ProductSettingsPage = ({
                   <th className="p-4 font-semibold text-gray-600">תמונה</th>
                   <th className="p-4 font-semibold text-gray-600">שם המוצר</th>
                   <th className="p-4 font-semibold text-gray-600">קטגוריה</th>
+                  <th className="p-4 font-semibold text-gray-600">חברה</th>
                   <th className="p-4 font-semibold text-gray-600">IDDSI</th>
                   <th className="p-4 font-semibold text-gray-600">קלוריות</th>
                   <th className="p-4 font-semibold text-gray-600">
@@ -198,7 +202,7 @@ const ProductSettingsPage = ({
                 {products.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={9}
                       className="p-8 text-center text-gray-500 text-lg"
                     >
                       אין מוצרים קיימים במערכת.

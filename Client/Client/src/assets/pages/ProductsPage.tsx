@@ -17,6 +17,7 @@ export interface ProductData {
   sodium: number;
   contains?: Allergen[];
   mayContain?: Allergen[];
+  texture?: string;
   properties?: string[];
 }
 
@@ -216,6 +217,7 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
                         sodium={product.sodium}
                         contains={product.contains}
                         mayContain={product.mayContain}
+                        texture={product.texture}
                         properties={product.properties}
                         state="regular"
                       />
