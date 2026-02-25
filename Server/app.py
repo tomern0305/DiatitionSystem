@@ -68,7 +68,7 @@ def get_products():
             "texture_id": p.texture_id,
             "properties": p.properties,
             "company": p.company,
-            "lastEditDate": p.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+            "lastEditDate": p.updated_at.strftime('%Y-%m-%d %H:%M:%S') if p.updated_at else None
         })
     return jsonify(result)
 
@@ -332,6 +332,40 @@ def delete_texture(texture_id):
     db.session.delete(texture)
     db.session.commit()
     return jsonify({"message": "Texture deleted"})
+
+# ================= Database Migration API =================
+
+@app.route('/api/run-migrations', methods=['GET'])
+def run_migrations():
+    """
+    Run database migrations manually to add missing columns in production
+    without dropping the tables.
+    https://dietitian-api.onrender.com/api/run-migrations
+    """
+    try:
+        # Add company column if it doesn't exist
+        db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS company VARCHAR(100);"))
+        
+        # Add created_at column if it doesn't exist
+        db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+        
+        # Add updated_at column if it doesn't exist
+        db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+
+        # Add texture_notes and forbidden_for if they don't exist
+        db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS texture_notes TEXT;"))
+        db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS allergy_notes TEXT;"))
+        db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS forbidden_for VARCHAR(200);"))
+
+        # Nutrition vector and openai embedding
+        # db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS nutrition_vector vector(6);"))
+        # db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS openai_embedding vector(1536);"))
+
+        db.session.commit()
+        return jsonify({"message": "Database migrations completed successfully!"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Migration failed: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
