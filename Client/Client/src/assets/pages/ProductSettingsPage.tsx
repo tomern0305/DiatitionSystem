@@ -195,19 +195,30 @@ const ProductSettingsPage = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {products.map((p) => (
-                  <ProductRow
-                    key={p.id}
-                    product={p}
-                    categories={categories}
-                    isExpanded={expandedRowId === p.id}
-                    onToggleExpand={() =>
-                      setExpandedRowId(expandedRowId === p.id ? null : p.id)
-                    }
-                    onSave={handleProductUpdate}
-                    onDelete={handleProductDelete}
-                  />
-                ))}
+                {products.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="p-8 text-center text-gray-500 text-lg"
+                    >
+                      אין מוצרים קיימים במערכת.
+                    </td>
+                  </tr>
+                ) : (
+                  products.map((p) => (
+                    <ProductRow
+                      key={p.id}
+                      product={p}
+                      categories={categories}
+                      isExpanded={expandedRowId === p.id}
+                      onToggleExpand={() =>
+                        setExpandedRowId(expandedRowId === p.id ? null : p.id)
+                      }
+                      onSave={handleProductUpdate}
+                      onDelete={handleProductDelete}
+                    />
+                  ))
+                )}
               </tbody>
             </table>
           </div>

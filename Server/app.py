@@ -3,7 +3,7 @@ import uuid
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from models import db, FoodItem, Category
+from models import db, FoodItem, Category, Sensitivity
 from sqlalchemy import text
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -221,6 +221,58 @@ def delete_category(cat_id):
     db.session.delete(cat)
     db.session.commit()
     return jsonify({"message": "Category deleted"})
+
+# ================= Sensitivities API =================
+
+@app.route('/api/sensitivities', methods=['GET'])
+def get_sensitivities():
+    sensitivities = Sensitivity.query.all()
+    return jsonify([{"id": s.id, "name": s.name} for s in sensitivities])
+
+@app.route('/api/sensitivities', methods=['POST'])
+def add_sensitivity():
+    data = request.json
+    name = data.get('name')
+    if not name:
+        return jsonify({"error": "Sensitivity name is required"}), 400
+        
+    if Sensitivity.query.filter_by(name=name).first():
+        return jsonify({"error": "Sensitivity already exists"}), 400
+        
+    new_sens = Sensitivity(name=name)
+    db.session.add(new_sens)
+    db.session.commit()
+    return jsonify({"message": "Sensitivity created", "id": new_sens.id}), 201
+
+@app.route('/api/sensitivities/<int:sens_id>', methods=['PUT'])
+def update_sensitivity(sens_id):
+    sens = Sensitivity.query.get(sens_id)
+    if not sens:
+        return jsonify({"error": "Sensitivity not found"}), 404
+        
+    data = request.json
+    new_name = data.get('name')
+    if not new_name:
+        return jsonify({"error": "New name is required"}), 400
+        
+    # Check if name already taken by another sensitivity
+    existing = Sensitivity.query.filter_by(name=new_name).first()
+    if existing and existing.id != sens_id:
+        return jsonify({"error": "Sensitivity name already exists"}), 400
+        
+    sens.name = new_name
+    db.session.commit()
+    return jsonify({"message": "Sensitivity updated"})
+
+@app.route('/api/sensitivities/<int:sens_id>', methods=['DELETE'])
+def delete_sensitivity(sens_id):
+    sens = Sensitivity.query.get(sens_id)
+    if not sens:
+        return jsonify({"error": "Sensitivity not found"}), 404
+        
+    db.session.delete(sens)
+    db.session.commit()
+    return jsonify({"message": "Sensitivity deleted"})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
