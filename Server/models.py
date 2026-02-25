@@ -15,6 +15,23 @@ class Category(db.Model):
     # Relationship to food items
     food_items = db.relationship('FoodItem', backref='category_rel', lazy=True)
 
+class Sensitivity(db.Model):
+    __tablename__ = 'sensitivities'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Texture(db.Model):
+    __tablename__ = 'textures'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationship to food items
+    food_items = db.relationship('FoodItem', backref='texture_rel', lazy=True)
+
 class FoodItem(db.Model):
     __tablename__ = 'food_items'
 
@@ -23,6 +40,7 @@ class FoodItem(db.Model):
     name = db.Column(db.String(200), nullable=False)  # React: name | Excel: שם המזון
     image_url = db.Column(db.String(500))  # React: image
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)  # References categories.id
+    texture_id = db.Column(db.Integer, db.ForeignKey('textures.id'), nullable=True)  # References textures.id
     company = db.Column(db.String(100))  # Excel: חברה
 
     # --- מרקם (IDDSI) ---

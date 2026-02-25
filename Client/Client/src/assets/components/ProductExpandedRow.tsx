@@ -1,6 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { ProductData } from "../pages/ProductSettingsPage";
-import type { CategoryData } from "../pages/CategorySettingsPage";
+import type {
+  CategoryData,
+  SensitivityData,
+  TextureData,
+} from "../pages/CategorySettingsPage";
 
 interface ProductExpandedRowProps {
   product: ProductData;
@@ -29,13 +33,34 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
     fat: product.fat || 0,
     sugares: product.sugares || 0,
     sodium: product.sodium || 0,
-    contains: product.contains || [],
+    contains: product.contains || ([] as string[]),
     mayContain: product.mayContain || [],
+    texture_id: product.texture_id || 0,
+    company: product.company || "",
     properties: product.properties || [],
   });
 
+  const [sensitivities, setSensitivities] = useState<SensitivityData[]>([]);
+  const [textures, setTextures] = useState<TextureData[]>([]);
   const [saving, setSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    if (isEditing) {
+      if (sensitivities.length === 0) {
+        fetch(`${import.meta.env.VITE_API_URL}/api/sensitivities`)
+          .then((res) => res.json())
+          .then((data) => setSensitivities(data))
+          .catch((err) => console.error("Error fetching sensitivities:", err));
+      }
+      if (textures.length === 0) {
+        fetch(`${import.meta.env.VITE_API_URL}/api/texture`)
+          .then((res) => res.json())
+          .then((data) => setTextures(data))
+          .catch((err) => console.error("Error fetching textures:", err));
+      }
+    }
+  }, [isEditing]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -46,6 +71,34 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
       [name]:
         type === "number" || name === "category_id" ? Number(value) : value,
     }));
+  };
+
+  const handleContainsChange = (sensName: string) => {
+    setFormData((prev) => {
+      const current = prev.contains;
+      if (current.includes(sensName)) {
+        return {
+          ...prev,
+          contains: current.filter((item) => item !== sensName),
+        };
+      } else {
+        return { ...prev, contains: [...current, sensName] };
+      }
+    });
+  };
+
+  const handleMayContainChange = (sensName: string) => {
+    setFormData((prev) => {
+      const current = prev.mayContain;
+      if (current.includes(sensName)) {
+        return {
+          ...prev,
+          mayContain: current.filter((item) => item !== sensName),
+        };
+      } else {
+        return { ...prev, mayContain: [...current, sensName] };
+      }
+    });
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,6 +227,59 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
               {product.sodium} מ"ג
             </div>
           </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2 md:col-span-4 mt-2">
+            <div className="text-gray-500 text-sm mb-1">טקסטורה מוגדרת</div>
+            <div className="text-lg font-bold text-gray-800">
+              {product.texture || "ללא טקסטורה מוגדרת"}
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2 md:col-span-4 mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div className="text-gray-500 text-sm mb-2">
+                  מכיל (רגישויות/אלרגיות)
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {!product.contains || product.contains.length === 0 ? (
+                    <span className="text-sm text-gray-400">
+                      לא הוגדרו רגישויות
+                    </span>
+                  ) : (
+                    product.contains.map((sens, idx) => (
+                      <span
+                        key={idx}
+                        className="bg-red-50 text-red-700 text-sm px-3 py-1 rounded-full font-medium border border-red-100"
+                      >
+                        {sens}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-gray-500 text-sm mb-2">
+                  עלול להכיל (רגישויות/אלרגיות)
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {!product.mayContain || product.mayContain.length === 0 ? (
+                    <span className="text-sm text-gray-400">
+                      לא הוגדר "עלול להכיל"
+                    </span>
+                  ) : (
+                    product.mayContain.map((sens, idx) => (
+                      <span
+                        key={`may-${idx}`}
+                        className="bg-amber-50 text-amber-700 text-sm px-3 py-1 rounded-full font-medium border border-amber-100"
+                      >
+                        {sens}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -225,31 +331,79 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
-            תמונת מוצר
+            חברה / מותג
           </label>
-          <div className="flex items-center gap-4">
+          <input
+            type="text"
+            name="company"
+            value={formData.company}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+            placeholder="לדוג': תנובה, שטראוס..."
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            טקסטורה
+          </label>
+          <select
+            name="texture_id"
+            value={formData.texture_id}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+          >
+            <option value={0}>ללא טקסטורה מוגדרת</option>
+            {textures.map((txt) => (
+              <option key={txt.id} value={txt.id}>
+                {txt.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            תמונת מוצר (קישור או העלאה)
+          </label>
+          <div className="flex flex-col gap-3">
             <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={isUploading}
-              className="w-full border border-gray-300 p-2 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-md file:border-0
-                file:text-sm file:font-semibold
-                file:bg-blue-50 file:text-blue-700
-                hover:file:bg-blue-100 disabled:opacity-50"
+              type="text"
+              name="image"
+              placeholder="הכנס קישור לתמונה (URL)..."
+              value={formData.image}
+              onChange={handleInputChange}
+              className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none"
             />
-            {isUploading && (
-              <span className="text-sm text-gray-500 shrink-0">מעלה...</span>
-            )}
+            <div className="flex items-center gap-4">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={isUploading}
+                className="w-full border border-gray-300 p-2 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-md file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-blue-50 file:text-blue-700
+                  hover:file:bg-blue-100 disabled:opacity-50"
+              />
+              {isUploading && (
+                <span className="text-sm text-gray-500 shrink-0">מעלה...</span>
+              )}
+            </div>
           </div>
           {formData.image && (
-            <div className="mt-2">
+            <div className="mt-3">
+              <span className="text-xs text-gray-500 block mb-1">
+                תצוגה מקדימה:
+              </span>
               <img
                 src={formData.image}
                 alt="Preview"
-                className="h-16 w-16 object-cover rounded-md shadow-sm border border-gray-200"
+                className="h-20 w-20 object-cover rounded-md shadow-sm border border-gray-200"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src =
+                    "https://placehold.co/100x100?text=Error";
+                }}
               />
             </div>
           )}
@@ -344,6 +498,69 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             onChange={handleInputChange}
             className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white outline-none"
           />
+        </div>
+
+        {/* Sensitivities/Allergies Selection in Edit Mode */}
+        <div className="col-span-1 md:col-span-2 lg:col-span-3 mt-2 space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              מכיל (רגישויות / אלרגיות / מאפיינים)
+            </label>
+            <div className="flex flex-wrap gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
+              {sensitivities.length === 0 ? (
+                <span className="text-gray-500 text-sm">
+                  לא נמצאו רגישויות מוגדרות במערכת
+                </span>
+              ) : (
+                sensitivities.map((sens) => (
+                  <label
+                    key={sens.id}
+                    className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm hover:border-indigo-300 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
+                      checked={formData.contains.includes(sens.name)}
+                      onChange={() => handleContainsChange(sens.name)}
+                    />
+                    <span className="text-sm text-gray-800 select-none">
+                      {sens.name}
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              עלול להכיל (רגישויות / אלרגיות / מאפיינים)
+            </label>
+            <div className="flex flex-wrap gap-3 p-4 border border-gray-200 rounded-xl bg-gray-50">
+              {sensitivities.length === 0 ? (
+                <span className="text-gray-500 text-sm">
+                  לא נמצאו רגישויות מוגדרות במערכת
+                </span>
+              ) : (
+                sensitivities.map((sens) => (
+                  <label
+                    key={`may-${sens.id}`}
+                    className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm hover:border-amber-300 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500 cursor-pointer"
+                      checked={formData.mayContain.includes(sens.name)}
+                      onChange={() => handleMayContainChange(sens.name)}
+                    />
+                    <span className="text-sm text-gray-800 select-none">
+                      {sens.name}
+                    </span>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

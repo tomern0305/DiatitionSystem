@@ -57,6 +57,9 @@ const ProductRow: React.FC<ProductRowProps> = ({
         </td>
         <td className="p-4 font-medium text-gray-800">{product.name}</td>
         <td className="p-4 text-gray-600">{product.category}</td>
+        <td className="p-4 font-medium text-gray-800">
+          {product.company || "-"}
+        </td>
         <td className="p-4 text-gray-600">{product.iddsi}</td>
         <td className="p-4 text-gray-600">{product.calories}</td>
         <td className="p-4 text-gray-600">{product.protein}</td>
@@ -69,7 +72,7 @@ const ProductRow: React.FC<ProductRowProps> = ({
       {isExpanded && (
         <tr>
           <td
-            colSpan={8}
+            colSpan={9}
             className="p-0 border-b border-gray-100 bg-gray-50/50"
           >
             <ProductExpandedRow

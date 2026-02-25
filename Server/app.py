@@ -3,7 +3,7 @@ import uuid
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from models import db, FoodItem, Category
+from models import db, FoodItem, Category, Sensitivity, Texture
 from sqlalchemy import text
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -64,7 +64,10 @@ def get_products():
             "sodium": p.sodium,
             "contains": p.contains,
             "mayContain": p.may_contain,
+            "texture": p.texture_rel.name if p.texture_rel else None,
+            "texture_id": p.texture_id,
             "properties": p.properties,
+            "company": p.company,
             "lastEditDate": p.updated_at.strftime('%Y-%m-%d %H:%M:%S')
         })
     return jsonify(result)
@@ -114,7 +117,9 @@ def add_product():
         sodium=data.get('sodium', 0.0),
         contains=data.get('contains', []),
         may_contain=data.get('mayContain', []),
-        properties=data.get('properties', [])
+        texture_id=data.get('texture_id', None),
+        properties=data.get('properties', []),
+        company=data.get('company', '')
     )
     
     try:
@@ -145,7 +150,9 @@ def update_product(prod_id):
         if 'sodium' in data: product.sodium = data['sodium']
         if 'contains' in data: product.contains = data['contains']
         if 'mayContain' in data: product.may_contain = data['mayContain']
+        if 'texture_id' in data: product.texture_id = data['texture_id']
         if 'properties' in data: product.properties = data['properties']
+        if 'company' in data: product.company = data['company']
         
         db.session.commit()
         return jsonify({"message": "Product updated successfully"})
@@ -221,6 +228,110 @@ def delete_category(cat_id):
     db.session.delete(cat)
     db.session.commit()
     return jsonify({"message": "Category deleted"})
+
+# ================= Sensitivities API =================
+
+@app.route('/api/sensitivities', methods=['GET'])
+def get_sensitivities():
+    sensitivities = Sensitivity.query.all()
+    return jsonify([{"id": s.id, "name": s.name} for s in sensitivities])
+
+@app.route('/api/sensitivities', methods=['POST'])
+def add_sensitivity():
+    data = request.json
+    name = data.get('name')
+    if not name:
+        return jsonify({"error": "Sensitivity name is required"}), 400
+        
+    if Sensitivity.query.filter_by(name=name).first():
+        return jsonify({"error": "Sensitivity already exists"}), 400
+        
+    new_sens = Sensitivity(name=name)
+    db.session.add(new_sens)
+    db.session.commit()
+    return jsonify({"message": "Sensitivity created", "id": new_sens.id}), 201
+
+@app.route('/api/sensitivities/<int:sens_id>', methods=['PUT'])
+def update_sensitivity(sens_id):
+    sens = Sensitivity.query.get(sens_id)
+    if not sens:
+        return jsonify({"error": "Sensitivity not found"}), 404
+        
+    data = request.json
+    new_name = data.get('name')
+    if not new_name:
+        return jsonify({"error": "New name is required"}), 400
+        
+    # Check if name already taken by another sensitivity
+    existing = Sensitivity.query.filter_by(name=new_name).first()
+    if existing and existing.id != sens_id:
+        return jsonify({"error": "Sensitivity name already exists"}), 400
+        
+    sens.name = new_name
+    db.session.commit()
+    return jsonify({"message": "Sensitivity updated"})
+
+@app.route('/api/sensitivities/<int:sens_id>', methods=['DELETE'])
+def delete_sensitivity(sens_id):
+    sens = Sensitivity.query.get(sens_id)
+    if not sens:
+        return jsonify({"error": "Sensitivity not found"}), 404
+        
+    db.session.delete(sens)
+    db.session.commit()
+    return jsonify({"message": "Sensitivity deleted"})
+
+# ================= Textures API =================
+
+@app.route('/api/texture', methods=['GET'])
+def get_textures():
+    textures = Texture.query.all()
+    return jsonify([{"id": s.id, "name": s.name} for s in textures])
+
+@app.route('/api/texture', methods=['POST'])
+def add_texture():
+    data = request.json
+    name = data.get('name')
+    if not name:
+        return jsonify({"error": "Texture name is required"}), 400
+        
+    if Texture.query.filter_by(name=name).first():
+        return jsonify({"error": "Texture already exists"}), 400
+        
+    new_texture = Texture(name=name)
+    db.session.add(new_texture)
+    db.session.commit()
+    return jsonify({"message": "Texture created", "id": new_texture.id}), 201
+
+@app.route('/api/texture/<int:texture_id>', methods=['PUT'])
+def update_texture(texture_id):
+    texture = Texture.query.get(texture_id)
+    if not texture:
+        return jsonify({"error": "Texture not found"}), 404
+        
+    data = request.json
+    new_name = data.get('name')
+    if not new_name:
+        return jsonify({"error": "New name is required"}), 400
+        
+    # Check if name already taken by another sensitivity
+    existing = Texture.query.filter_by(name=new_name).first()
+    if existing and existing.id != texture_id:
+        return jsonify({"error": "Texture name already exists"}), 400
+        
+    texture.name = new_name
+    db.session.commit()
+    return jsonify({"message": "Texture updated"})
+
+@app.route('/api/texture/<int:texture_id>', methods=['DELETE'])
+def delete_texture(texture_id):
+    texture = Texture.query.get(texture_id)
+    if not texture:
+        return jsonify({"error": "Texture not found"}), 404
+        
+    db.session.delete(texture)
+    db.session.commit()
+    return jsonify({"message": "Texture deleted"})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

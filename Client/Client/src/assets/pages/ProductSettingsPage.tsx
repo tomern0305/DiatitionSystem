@@ -18,6 +18,9 @@ export interface ProductData {
   sodium: number;
   contains?: string[];
   mayContain?: string[];
+  texture?: string;
+  texture_id?: number;
+  company?: string;
   properties?: string[];
   lastEditDate: Date;
 }
@@ -184,6 +187,7 @@ const ProductSettingsPage = ({
                   <th className="p-4 font-semibold text-gray-600">תמונה</th>
                   <th className="p-4 font-semibold text-gray-600">שם המוצר</th>
                   <th className="p-4 font-semibold text-gray-600">קטגוריה</th>
+                  <th className="p-4 font-semibold text-gray-600">חברה</th>
                   <th className="p-4 font-semibold text-gray-600">IDDSI</th>
                   <th className="p-4 font-semibold text-gray-600">קלוריות</th>
                   <th className="p-4 font-semibold text-gray-600">
@@ -195,19 +199,30 @@ const ProductSettingsPage = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {products.map((p) => (
-                  <ProductRow
-                    key={p.id}
-                    product={p}
-                    categories={categories}
-                    isExpanded={expandedRowId === p.id}
-                    onToggleExpand={() =>
-                      setExpandedRowId(expandedRowId === p.id ? null : p.id)
-                    }
-                    onSave={handleProductUpdate}
-                    onDelete={handleProductDelete}
-                  />
-                ))}
+                {products.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={9}
+                      className="p-8 text-center text-gray-500 text-lg"
+                    >
+                      אין מוצרים קיימים במערכת.
+                    </td>
+                  </tr>
+                ) : (
+                  products.map((p) => (
+                    <ProductRow
+                      key={p.id}
+                      product={p}
+                      categories={categories}
+                      isExpanded={expandedRowId === p.id}
+                      onToggleExpand={() =>
+                        setExpandedRowId(expandedRowId === p.id ? null : p.id)
+                      }
+                      onSave={handleProductUpdate}
+                      onDelete={handleProductDelete}
+                    />
+                  ))
+                )}
               </tbody>
             </table>
           </div>
