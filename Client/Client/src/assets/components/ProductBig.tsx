@@ -12,7 +12,7 @@ interface ProductBigProps {
   mayContain?: string[];
   texture?: string | null;
   properties?: string[];
-  state?: "regular" | "selected" | "disabled";
+  state?: "regular" | "selected" | "disabled" | "warning";
 }
 
 const ProductBig = ({
@@ -45,6 +45,11 @@ const ProductBig = ({
     baseContainer =
       "bg-gray-50/80 backdrop-blur-sm border-gray-200 opacity-60 grayscale-[40%]";
     stateClasses = "pointer-events-none";
+  } else if (state === "warning") {
+    baseContainer =
+      "bg-white/90 backdrop-blur-2xl border-orange-400 shadow-[0_8px_30px_rgba(249,115,22,0.15)] ring-1 ring-orange-400";
+    stateClasses =
+      "hover:shadow-[0_20px_40px_rgba(249,115,22,0.2)] hover:-translate-y-1";
   }
 
   return (
