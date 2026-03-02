@@ -4,6 +4,7 @@ import SideMenu from "./assets/components/SideMenu";
 import ProductsPage from "./assets/pages/ProductsPage";
 import ProductSettingsPage from "./assets/pages/ProductSettingsPage";
 import CategorySettingsPage from "./assets/pages/CategorySettingsPage";
+import LineWorkerProductsPage from "./assets/pages/LineWorkerProductsPage.tsx";
 
 const App = () => {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
@@ -21,6 +22,12 @@ const App = () => {
             path="/settings"
             element={
               <ProductSettingsPage setIsSideMenuOpen={setIsSideMenuOpen} />
+            }
+          />
+            <Route
+            path="/lineworker"
+            element={
+              <LineWorkerProductsPage setIsSideMenuOpen={setIsSideMenuOpen} />
             }
           />
           <Route

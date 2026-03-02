@@ -125,6 +125,29 @@ const SideMenu = ({ isOpen, setIsOpen }: SideMenuProps) => {
               </svg>
               ניהול משתנים
             </Link>
+            <Link
+              to="/lineworker"
+              onClick={toggleMenu}
+              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-blue-50 hover:text-blue-600 transition-all font-semibold text-gray-600 bg-gray-50/50"
+            >
+              <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-5 h-5"
+              >
+                <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+                <path d="M7 2v20" />
+                <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+              </svg>
+              עובד פס
+            </Link>
           </li>
         </ul>
       </div>
