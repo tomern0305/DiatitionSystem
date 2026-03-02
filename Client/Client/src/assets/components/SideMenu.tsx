@@ -125,6 +125,8 @@ const SideMenu = ({ isOpen, setIsOpen }: SideMenuProps) => {
               </svg>
               ניהול משתנים
             </Link>
+          </li>
+          <li>
             <Link
               to="/lineworker"
               onClick={toggleMenu}
