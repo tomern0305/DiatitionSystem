@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import AddProductForm from "../components/settings/AddProductForm";
 import TopBar from "../components/ui/TopBar";
 import ProductRow from "../components/settings/ProductRow";
+import Loader from "../components/ui/Loader";
 import type { ProductData, CategoryData } from "../types";
 
 interface ProductSettingsPageProps {
@@ -86,8 +87,8 @@ const ProductSettingsPage = ({
 
   if (loading)
     return (
-      <div className="p-8 text-center" dir="rtl">
-        טוען נתונים...
+      <div className="p-8 text-center bg-gray-50 min-h-screen" dir="rtl">
+        <Loader text="טוען נתונים..." />
       </div>
     );
   if (error)

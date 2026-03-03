@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import ProductBig from "../components/products/ProductSmall";
 import TopBar from "../components/ui/TopBar";
+import Loader from "../components/ui/Loader";
 import type {
   ProductData,
   CategoryData,
@@ -64,8 +65,11 @@ const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center" dir="rtl">
-        <p className="text-xl">טוען מוצרים...</p>
+      <div
+        className="min-h-screen flex items-center justify-center bg-gray-50"
+        dir="rtl"
+      >
+        <Loader text="טוען מוצרים..." />
       </div>
     );
   if (error)

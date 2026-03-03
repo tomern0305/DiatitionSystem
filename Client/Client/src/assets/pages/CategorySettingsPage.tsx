@@ -6,6 +6,7 @@ import AddSensitivityForm from "../components/settings/AddSensitivityForm";
 import SensitivityRow from "../components/settings/SensitivityRow";
 import AddTextureForm from "../components/settings/AddTextureForm";
 import TextureRow from "../components/settings/TextureRow";
+import Loader from "../components/ui/Loader";
 import type { CategoryData, SensitivityData, TextureData } from "../types";
 
 interface CategorySettingsPageProps {
@@ -268,8 +269,8 @@ const CategorySettingsPage = ({
 
   if (loadingCats || loadingSens || loadingTextures)
     return (
-      <div className="p-8 text-center" dir="rtl">
-        טוען נתונים...
+      <div className="p-8 text-center bg-gray-50 min-h-screen" dir="rtl">
+        <Loader text="טוען נתונים..." />
       </div>
     );
   if (errorCats || errorSens || errorTextures)
