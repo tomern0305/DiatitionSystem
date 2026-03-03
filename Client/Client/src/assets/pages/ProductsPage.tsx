@@ -343,10 +343,10 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
               <section key={category} className="relative">
                 {/* Category Title Header */}
                 <div className="flex items-center gap-4 mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 shrink-0">
+                  <h2 className="text-2xl font-bold text-gray-800 shrink-0 whitespace-normal break-words max-w-full">
                     {category}
                   </h2>
-                  <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
+                  <div className="h-px bg-gray-200 flex-grow rounded-full shrink"></div>
                 </div>
 
                 {/* Products Grid */}
