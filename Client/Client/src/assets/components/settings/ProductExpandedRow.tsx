@@ -44,6 +44,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
   const [textures, setTextures] = useState<TextureData[]>([]);
   const [saving, setSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isEditing) {
@@ -151,6 +152,24 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
   };
 
   const handleSave = async () => {
+    setValidationError(null);
+
+    // Validation
+    if (!formData.name.trim()) {
+      setValidationError("נא למלא את שם המוצר.");
+      return;
+    }
+    if (!formData.category_id || formData.category_id === 0) {
+      setValidationError("נא לבחור קטגוריה למוצר.");
+      return;
+    }
+    if (!formData.texture_id || formData.texture_id === 0) {
+      setValidationError(
+        "נא לבחור טקסטורת מנה (חובה). לא ניתן לשמור ללא בחירת טקסטורה.",
+      );
+      return;
+    }
+
     setSaving(true);
     try {
       await onSave(product.id, formData);
@@ -609,7 +628,27 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
         </div>
       </div>
 
-      <div className="mt-8 flex justify-end gap-3">
+      {validationError && (
+        <div className="mt-4 bg-red-50 text-red-600 p-3 rounded-lg border border-red-100 flex items-center gap-2 animate-fade-in-up">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <span className="font-medium text-sm">{validationError}</span>
+        </div>
+      )}
+
+      <div className="mt-6 flex justify-end gap-3">
         <button
           onClick={() => setIsEditing(false)}
           className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-all"
