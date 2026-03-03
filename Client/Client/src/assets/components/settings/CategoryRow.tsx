@@ -65,7 +65,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
             </button>
           </form>
         ) : (
-          <span className="font-semibold text-gray-800 text-lg">
+          <span className="font-semibold text-gray-800 text-lg whitespace-normal break-words sm:break-normal">
             {category.name}
           </span>
         )}
