@@ -32,8 +32,8 @@ const CategorySettingsPage = ({
   const [isAddingSensitivity, setIsAddingSensitivity] = useState(false);
   const [isAddingTexture, setIsAddingTexture] = useState(false);
 
-  const fetchCategories = () => {
-    setLoadingCats(true);
+  const fetchCategories = (showLoader: boolean = true) => {
+    if (showLoader) setLoadingCats(true);
     fetch(`${import.meta.env.VITE_API_URL}/api/categories`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch categories");
@@ -41,16 +41,16 @@ const CategorySettingsPage = ({
       })
       .then((data) => {
         setCategories(data);
-        setLoadingCats(false);
+        if (showLoader) setLoadingCats(false);
       })
       .catch((err) => {
         setErrorCats(err.message);
-        setLoadingCats(false);
+        if (showLoader) setLoadingCats(false);
       });
   };
 
-  const fetchSensitivities = () => {
-    setLoadingSens(true);
+  const fetchSensitivities = (showLoader: boolean = true) => {
+    if (showLoader) setLoadingSens(true);
     fetch(`${import.meta.env.VITE_API_URL}/api/sensitivities`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch sensitivities");
@@ -58,16 +58,16 @@ const CategorySettingsPage = ({
       })
       .then((data) => {
         setSensitivities(data);
-        setLoadingSens(false);
+        if (showLoader) setLoadingSens(false);
       })
       .catch((err) => {
         setErrorSens(err.message);
-        setLoadingSens(false);
+        if (showLoader) setLoadingSens(false);
       });
   };
 
-  const fetchTextures = () => {
-    setLoadingTextures(true);
+  const fetchTextures = (showLoader: boolean = true) => {
+    if (showLoader) setLoadingTextures(true);
     fetch(`${import.meta.env.VITE_API_URL}/api/texture`)
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch textures");
@@ -75,11 +75,11 @@ const CategorySettingsPage = ({
       })
       .then((data) => {
         setTextures(data);
-        setLoadingTextures(false);
+        if (showLoader) setLoadingTextures(false);
       })
       .catch((err) => {
         setErrorTextures(err.message);
-        setLoadingTextures(false);
+        if (showLoader) setLoadingTextures(false);
       });
   };
 
@@ -104,7 +104,7 @@ const CategorySettingsPage = ({
       if (!res.ok) throw new Error(data.error || "Failed to add category");
 
       setIsAddingCategory(false);
-      fetchCategories();
+      fetchCategories(false);
     } catch (err: any) {
       alert(`שגיאה בהוספת קטגוריה: ${err.message}`);
     }
@@ -123,7 +123,7 @@ const CategorySettingsPage = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update category");
 
-      fetchCategories();
+      fetchCategories(false);
     } catch (err: any) {
       alert(`שגיאה בעדכון קטגוריה: ${err.message}`);
     }
@@ -142,7 +142,7 @@ const CategorySettingsPage = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete category");
 
-      fetchCategories();
+      fetchCategories(false);
     } catch (err: any) {
       alert(`לא ניתן למחוק: ${err.message}`);
     }
@@ -163,7 +163,7 @@ const CategorySettingsPage = ({
       if (!res.ok) throw new Error(data.error || "Failed to add sensitivity");
 
       setIsAddingSensitivity(false);
-      fetchSensitivities();
+      fetchSensitivities(false);
     } catch (err: any) {
       alert(`שגיאה בהוספת רגישות: ${err.message}`);
     }
@@ -183,7 +183,7 @@ const CategorySettingsPage = ({
       if (!res.ok)
         throw new Error(data.error || "Failed to update sensitivity");
 
-      fetchSensitivities();
+      fetchSensitivities(false);
     } catch (err: any) {
       alert(`שגיאה בעדכון רגישות: ${err.message}`);
     }
@@ -204,7 +204,7 @@ const CategorySettingsPage = ({
       if (!res.ok)
         throw new Error(data.error || "Failed to delete sensitivity");
 
-      fetchSensitivities();
+      fetchSensitivities(false);
     } catch (err: any) {
       alert(`לא ניתן למחוק: ${err.message}`);
     }
@@ -222,7 +222,7 @@ const CategorySettingsPage = ({
       if (!res.ok) throw new Error(data.error || "Failed to add texture");
 
       setIsAddingTexture(false);
-      fetchTextures();
+      fetchTextures(false);
     } catch (err: any) {
       alert(`שגיאה בהוספת טקסטורה: ${err.message}`);
     }
@@ -241,7 +241,7 @@ const CategorySettingsPage = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update texture");
 
-      fetchTextures();
+      fetchTextures(false);
     } catch (err: any) {
       alert(`שגיאה בעדכון טקסטורה: ${err.message}`);
     }
@@ -260,7 +260,7 @@ const CategorySettingsPage = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete texture");
 
-      fetchTextures();
+      fetchTextures(false);
     } catch (err: any) {
       alert(`לא ניתן למחוק: ${err.message}`);
     }
