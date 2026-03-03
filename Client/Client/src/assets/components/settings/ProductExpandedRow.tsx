@@ -66,11 +66,36 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        type === "number" || name === "category_id" ? Number(value) : value,
-    }));
+    setFormData((prev) => {
+      let parsedValue: string | number = value;
+
+      if (
+        type === "number" ||
+        name === "category_id" ||
+        name === "iddsi" ||
+        name === "texture_id"
+      ) {
+        parsedValue = value === "" ? 0 : Number(value);
+      }
+
+      return {
+        ...prev,
+        [name]: parsedValue,
+      };
+    });
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (e.target.value === "0") {
+      e.target.value = "";
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (e.target.value === "") {
+      const name = e.target.name;
+      setFormData((prev) => ({ ...prev, [name]: 0 }));
+    }
   };
 
   const handleContainsChange = (sensName: string) => {
@@ -230,7 +255,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2 md:col-span-4 mt-2">
             <div className="text-gray-500 text-sm mb-1">טקסטורה מוגדרת</div>
             <div className="text-lg font-bold text-gray-800">
-              {product.texture || "ללא טקסטורה מוגדרת"}
+              {product.texture || "יש לבחור טקסטורה"}
             </div>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2 md:col-span-4 mt-2">
@@ -352,7 +377,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             onChange={handleInputChange}
             className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none"
           >
-            <option value={0}>ללא טקסטורה מוגדרת</option>
+            <option value={0}>יש לבחור טקסטורה</option>
             {textures.map((txt) => (
               <option key={txt.id} value={txt.id}>
                 {txt.name}
@@ -414,13 +439,21 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
           <label className="block text-sm font-semibold text-gray-700 mb-1">
             מרקם (IDDSI)
           </label>
-          <input
-            type="number"
+          <select
             name="iddsi"
             value={formData.iddsi}
             onChange={handleInputChange}
-            className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white outline-none"
-          />
+            className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option value={0}>0 - דליל</option>
+            <option value={1}>1 - סמיך קלות</option>
+            <option value={2}>2 - סמיך במידה</option>
+            <option value={3}>3 - סמיך למדי</option>
+            <option value={4}>4 - נוזלי סמיך / מחיתי</option>
+            <option value={5}>5 - טחון ורך</option>
+            <option value={6}>6 - רך לחיתוך</option>
+            <option value={7}>7 - רגיל</option>
+          </select>
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -429,8 +462,10 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
           <input
             type="number"
             name="calories"
-            value={formData.calories}
+            value={formData.calories === 0 ? "" : formData.calories}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white outline-none"
           />
         </div>
@@ -442,8 +477,10 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             type="number"
             step="0.1"
             name="protein"
-            value={formData.protein}
+            value={formData.protein === 0 ? "" : formData.protein}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white outline-none"
           />
         </div>
@@ -455,8 +492,10 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             type="number"
             step="0.1"
             name="carbs"
-            value={formData.carbs}
+            value={formData.carbs === 0 ? "" : formData.carbs}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white outline-none"
           />
         </div>
@@ -468,8 +507,10 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             type="number"
             step="0.1"
             name="fat"
-            value={formData.fat}
+            value={formData.fat === 0 ? "" : formData.fat}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white outline-none"
           />
         </div>
@@ -481,8 +522,10 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             type="number"
             step="0.1"
             name="sugares"
-            value={formData.sugares}
+            value={formData.sugares === 0 ? "" : formData.sugares}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white outline-none"
           />
         </div>
@@ -494,8 +537,10 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             type="number"
             step="0.1"
             name="sodium"
-            value={formData.sodium}
+            value={formData.sodium === 0 ? "" : formData.sodium}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white outline-none"
           />
         </div>

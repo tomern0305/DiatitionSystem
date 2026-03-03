@@ -59,11 +59,38 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target as HTMLInputElement;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        type === "number" || name === "category_id" ? Number(value) : value,
-    }));
+    setFormData((prev) => {
+      let parsedValue: string | number = value;
+
+      if (
+        type === "number" ||
+        name === "category_id" ||
+        name === "iddsi" ||
+        name === "texture_id"
+      ) {
+        // If the user clears the input completely, store 0 so math doesn't break,
+        // but handle string conversion cleanly.
+        parsedValue = value === "" ? 0 : Number(value);
+      }
+
+      return {
+        ...prev,
+        [name]: parsedValue,
+      };
+    });
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (e.target.value === "0") {
+      e.target.value = "";
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (e.target.value === "") {
+      const name = e.target.name;
+      setFormData((prev) => ({ ...prev, [name]: 0 }));
+    }
   };
 
   const handleContainsChange = (sensName: string) => {
@@ -224,7 +251,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             onChange={handleInputChange}
             className="w-full border border-gray-300 p-2 rounded-md"
           >
-            <option value={0}>ללא טקסטורה מוגדרת</option>
+            <option value={0}>יש לבחור טקסטורה</option>
             {textures.map((txt) => (
               <option key={txt.id} value={txt.id}>
                 {txt.name}
@@ -286,15 +313,21 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             מרקם (IDDSI)
           </label>
-          <input
-            type="number"
+          <select
             name="iddsi"
             value={formData.iddsi}
             onChange={handleInputChange}
-            min="0"
-            max="7"
             className="w-full border border-gray-300 p-2 rounded-md"
-          />
+          >
+            <option value={0}>0 - דליל</option>
+            <option value={1}>1 - סמיך קלות</option>
+            <option value={2}>2 - סמיך במידה</option>
+            <option value={3}>3 - סמיך למדי</option>
+            <option value={4}>4 - נוזלי סמיך / מחיתי</option>
+            <option value={5}>5 - טחון ורך</option>
+            <option value={6}>6 - רך לחיתוך</option>
+            <option value={7}>7 - רגיל</option>
+          </select>
         </div>
 
         <div>
@@ -306,6 +339,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             name="calories"
             value={formData.calories}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2 rounded-md"
           />
         </div>
@@ -320,6 +355,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             name="protein"
             value={formData.protein}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2 rounded-md"
           />
         </div>
@@ -334,6 +371,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             name="carbs"
             value={formData.carbs}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2 rounded-md"
           />
         </div>
@@ -348,6 +387,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             name="fat"
             value={formData.fat}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2 rounded-md"
           />
         </div>
@@ -362,6 +403,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             name="sugares"
             value={formData.sugares}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2 rounded-md"
           />
         </div>
@@ -376,6 +419,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             name="sodium"
             value={formData.sodium}
             onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             className="w-full border border-gray-300 p-2 rounded-md"
           />
         </div>

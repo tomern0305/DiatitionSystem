@@ -58,11 +58,31 @@ const ProductBig = ({
     >
       {/* Floating Image Container */}
       <div className="relative h-28 w-full rounded-[16px] overflow-hidden shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)] shrink-0">
-        <img
-          src={image}
-          alt={name}
-          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-        />
+        {image ? (
+          <img
+            src={image}
+            alt={name}
+            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            onError={(e) => {
+              // Hide broken image and show text fallback instead
+              (e.target as HTMLImageElement).style.display = "none";
+              const parent = (e.target as HTMLImageElement).parentElement;
+              if (parent && !parent.querySelector(".fallback-text")) {
+                const fallbackDiv = document.createElement("div");
+                fallbackDiv.className =
+                  "fallback-text w-full h-full flex items-center justify-center p-3 text-center bg-gradient-to-br from-gray-100 to-gray-200";
+                fallbackDiv.innerHTML = `<span class="text-sm font-bold text-gray-500 max-h-full overflow-hidden text-ellipsis">${name}</span>`;
+                parent.insertBefore(fallbackDiv, parent.firstChild);
+              }
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center p-3 text-center bg-gradient-to-br from-gray-100 to-gray-200">
+            <span className="text-sm font-bold text-gray-500 line-clamp-3">
+              {name}
+            </span>
+          </div>
+        )}
         {/* Sleek, frosted-glass IDDSI badge */}
         <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-md px-2 py-1 rounded-full border border-white/20 shadow-sm flex items-center gap-1 cursor-default hover:bg-black/50 transition-colors">
           <div className="w-1 h-1 rounded-full bg-white opacity-90"></div>
