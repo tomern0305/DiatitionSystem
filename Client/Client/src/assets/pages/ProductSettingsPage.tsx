@@ -1,29 +1,8 @@
 import React, { useState, useEffect } from "react";
-import AddProductForm from "../components/AddProductForm";
-import TopBar from "../components/TopBar";
-import ProductRow from "../components/ProductRow";
-import type { CategoryData } from "./CategorySettingsPage";
-
-export interface ProductData {
-  id: string;
-  category: string;
-  image: string;
-  name: string;
-  iddsi: number;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  sugares: number; // Matches the React component prop, though it's technically typo
-  sodium: number;
-  contains?: string[];
-  mayContain?: string[];
-  texture?: string;
-  texture_id?: number;
-  company?: string;
-  properties?: string[];
-  lastEditDate: Date;
-}
+import AddProductForm from "../components/settings/AddProductForm";
+import TopBar from "../components/ui/TopBar";
+import ProductRow from "../components/settings/ProductRow";
+import type { ProductData, CategoryData } from "../types";
 
 interface ProductSettingsPageProps {
   setIsSideMenuOpen?: React.Dispatch<React.SetStateAction<boolean>>;

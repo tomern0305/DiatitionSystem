@@ -1,19 +1,19 @@
 import React, { useState } from "react";
-import type { SensitivityData } from "../pages/CategorySettingsPage";
+import type { CategoryData } from "../../types";
 
-interface SensitivityRowProps {
-  sensitivity: SensitivityData;
+interface CategoryRowProps {
+  category: CategoryData;
   onEdit: (id: number, name: string) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
 }
 
-const SensitivityRow: React.FC<SensitivityRowProps> = ({
-  sensitivity,
+const CategoryRow: React.FC<CategoryRowProps> = ({
+  category,
   onEdit,
   onDelete,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(sensitivity.name);
+  const [editName, setEditName] = useState(category.name);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -22,7 +22,7 @@ const SensitivityRow: React.FC<SensitivityRowProps> = ({
 
     setIsSubmitting(true);
     try {
-      await onEdit(sensitivity.id, editName);
+      await onEdit(category.id, editName);
       setIsEditing(false);
     } catch (err) {
       console.error(err);
@@ -33,9 +33,6 @@ const SensitivityRow: React.FC<SensitivityRowProps> = ({
 
   return (
     <tr className="hover:bg-gray-50 transition-colors group">
-      <td className="p-4 sm:p-5 text-gray-400 font-mono text-sm">
-        #{sensitivity.id}
-      </td>
       <td className="p-4 sm:p-5">
         {isEditing ? (
           <form onSubmit={handleEditSubmit} className="flex items-center gap-3">
@@ -45,13 +42,13 @@ const SensitivityRow: React.FC<SensitivityRowProps> = ({
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               disabled={isSubmitting}
-              className="flex-1 px-3 py-1.5 bg-white border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-gray-800 shadow-sm disabled:opacity-50"
+              className="flex-1 px-3 py-1.5 bg-white border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-800 shadow-sm disabled:opacity-50"
               required
             />
             <button
               type="submit"
               disabled={isSubmitting}
-              className="text-white bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-300 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+              className="text-white bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
             >
               שמור
             </button>
@@ -60,7 +57,7 @@ const SensitivityRow: React.FC<SensitivityRowProps> = ({
               disabled={isSubmitting}
               onClick={() => {
                 setIsEditing(false);
-                setEditName(sensitivity.name);
+                setEditName(category.name);
               }}
               className="text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
             >
@@ -69,7 +66,7 @@ const SensitivityRow: React.FC<SensitivityRowProps> = ({
           </form>
         ) : (
           <span className="font-semibold text-gray-800 text-lg">
-            {sensitivity.name}
+            {category.name}
           </span>
         )}
       </td>
@@ -78,7 +75,7 @@ const SensitivityRow: React.FC<SensitivityRowProps> = ({
           <div className="flex items-center justify-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => setIsEditing(true)}
-              className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"
+              className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
               title="ערוך"
             >
               <svg
@@ -97,7 +94,7 @@ const SensitivityRow: React.FC<SensitivityRowProps> = ({
               </svg>
             </button>
             <button
-              onClick={() => onDelete(sensitivity.id)}
+              onClick={() => onDelete(category.id)}
               className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
               title="מחק"
             >
@@ -123,4 +120,4 @@ const SensitivityRow: React.FC<SensitivityRowProps> = ({
   );
 };
 
-export default SensitivityRow;
+export default CategoryRow;

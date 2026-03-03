@@ -1,39 +1,12 @@
 import { useState, useEffect } from "react";
-import ProductBig from "../components/ProductBig";
-import TopBar from "../components/TopBar";
-
-export interface ProductData {
-  id: string;
-  category: string;
-  image: string;
-  name: string;
-  iddsi: number;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  sugares: number;
-  sodium: number;
-  contains?: string[];
-  mayContain?: string[];
-  texture?: string;
-  properties?: string[];
-}
-
-export interface CategoryData {
-  id: number;
-  name: string;
-}
-
-export interface RestrictionsData {
-  id: number;
-  name: string;
-}
-
-export interface TexturesData {
-  id: number;
-  name: string;
-}
+import ProductBig from "../components/products/ProductBig";
+import TopBar from "../components/ui/TopBar";
+import type {
+  ProductData,
+  CategoryData,
+  RestrictionsData,
+  TexturesData,
+} from "../types";
 
 interface ProductsPageProps {
   setIsSideMenuOpen?: React.Dispatch<React.SetStateAction<boolean>>;

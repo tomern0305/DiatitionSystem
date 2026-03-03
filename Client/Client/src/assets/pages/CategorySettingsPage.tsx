@@ -1,26 +1,12 @@
 import { useState, useEffect } from "react";
-import TopBar from "../components/TopBar";
-import AddCategoryForm from "../components/AddCategoryForm";
-import CategoryRow from "../components/CategoryRow";
-import AddSensitivityForm from "../components/AddSensitivityForm";
-import SensitivityRow from "../components/SensitivityRow";
-import AddTextureForm from "../components/AddTextureForm";
-import TextureRow from "../components/TextureRow";
-
-export interface CategoryData {
-  id: number;
-  name: string;
-}
-
-export interface SensitivityData {
-  id: number;
-  name: string;
-}
-
-export interface TextureData {
-  id: number;
-  name: string;
-}
+import TopBar from "../components/ui/TopBar";
+import AddCategoryForm from "../components/settings/AddCategoryForm";
+import CategoryRow from "../components/settings/CategoryRow";
+import AddSensitivityForm from "../components/settings/AddSensitivityForm";
+import SensitivityRow from "../components/settings/SensitivityRow";
+import AddTextureForm from "../components/settings/AddTextureForm";
+import TextureRow from "../components/settings/TextureRow";
+import type { CategoryData, SensitivityData, TextureData } from "../types";
 
 interface CategorySettingsPageProps {
   setIsSideMenuOpen?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -322,9 +308,6 @@ const CategorySettingsPage = ({
               <table className="w-full text-right border-collapse min-w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="p-4 font-bold text-gray-600 text-sm">
-                      מזהה
-                    </th>
                     <th className="p-4 font-bold text-gray-600 text-sm w-full">
                       שם הקטגוריה
                     </th>
@@ -344,7 +327,7 @@ const CategorySettingsPage = ({
                   ))}
                   {categories.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="p-8 text-center text-gray-500">
+                      <td colSpan={2} className="p-8 text-center text-gray-500">
                         אין קטגוריות לשייך למוצרים.
                       </td>
                     </tr>
@@ -376,9 +359,6 @@ const CategorySettingsPage = ({
               <table className="w-full text-right border-collapse min-w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="p-4 font-bold text-gray-600 text-sm">
-                      מזהה
-                    </th>
                     <th className="p-4 font-bold text-gray-600 text-sm w-full">
                       המשתנה יכיל (מכיל...)
                     </th>
@@ -398,7 +378,7 @@ const CategorySettingsPage = ({
                   ))}
                   {sensitivities.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="p-8 text-center text-gray-500">
+                      <td colSpan={2} className="p-8 text-center text-gray-500">
                         אין רגישויות או אלרגיות.
                       </td>
                     </tr>
@@ -428,9 +408,6 @@ const CategorySettingsPage = ({
               <table className="w-full text-right border-collapse min-w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="p-4 font-bold text-gray-600 text-sm">
-                      מזהה
-                    </th>
                     <th className="p-4 font-bold text-gray-600 text-sm w-full">
                       שם הטקסטורה
                     </th>
@@ -450,7 +427,7 @@ const CategorySettingsPage = ({
                   ))}
                   {textures.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="p-8 text-center text-gray-500">
+                      <td colSpan={2} className="p-8 text-center text-gray-500">
                         אין טקסטורות לבחירה.
                       </td>
                     </tr>

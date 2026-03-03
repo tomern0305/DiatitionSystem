@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from "react";
-import type {
-  SensitivityData,
-  TextureData,
-} from "../pages/CategorySettingsPage";
-
-export interface CategoryData {
-  id: number;
-  name: string;
-}
+import type { SensitivityData, CategoryData, TextureData } from "../../types";
 
 interface AddProductFormProps {
   onProductAdded: () => void;

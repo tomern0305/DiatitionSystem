@@ -1,6 +1,5 @@
 import React from "react";
-import type { ProductData } from "../pages/ProductSettingsPage";
-import type { CategoryData } from "../pages/CategorySettingsPage";
+import type { ProductData, CategoryData } from "../../types";
 import ProductExpandedRow from "./ProductExpandedRow";
 
 interface ProductRowProps {

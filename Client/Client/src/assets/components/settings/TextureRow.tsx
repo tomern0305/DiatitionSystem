@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { TextureData } from "../pages/CategorySettingsPage";
+import type { TextureData } from "../../types";
 
 interface TextureRowProps {
   texture: TextureData;
@@ -33,9 +33,6 @@ const TextureRow: React.FC<TextureRowProps> = ({
 
   return (
     <tr className="hover:bg-gray-50 transition-colors group">
-      <td className="p-4 sm:p-5 text-gray-400 font-mono text-sm">
-        #{texture.id}
-      </td>
       <td className="p-4 sm:p-5">
         {isEditing ? (
           <form onSubmit={handleEditSubmit} className="flex items-center gap-3">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
-import SideMenu from "./assets/components/SideMenu";
+import SideMenu from "./assets/components/ui/SideMenu";
 import ProductsPage from "./assets/pages/ProductsPage";
 import ProductSettingsPage from "./assets/pages/ProductSettingsPage";
 import CategorySettingsPage from "./assets/pages/CategorySettingsPage";
@@ -24,7 +24,7 @@ const App = () => {
               <ProductSettingsPage setIsSideMenuOpen={setIsSideMenuOpen} />
             }
           />
-            <Route
+          <Route
             path="/lineworker"
             element={
               <LineWorkerProductsPage setIsSideMenuOpen={setIsSideMenuOpen} />

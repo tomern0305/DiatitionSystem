@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import type { ProductData } from "../pages/ProductSettingsPage";
 import type {
+  ProductData,
   CategoryData,
   SensitivityData,
   TextureData,
-} from "../pages/CategorySettingsPage";
+} from "../../types";
 
 interface ProductExpandedRowProps {
   product: ProductData;
@@ -79,7 +79,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
       if (current.includes(sensName)) {
         return {
           ...prev,
-          contains: current.filter((item) => item !== sensName),
+          contains: current.filter((item: string) => item !== sensName),
         };
       } else {
         return { ...prev, contains: [...current, sensName] };
@@ -93,7 +93,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
       if (current.includes(sensName)) {
         return {
           ...prev,
-          mayContain: current.filter((item) => item !== sensName),
+          mayContain: current.filter((item: string) => item !== sensName),
         };
       } else {
         return { ...prev, mayContain: [...current, sensName] };
@@ -245,7 +245,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
                       לא הוגדרו רגישויות
                     </span>
                   ) : (
-                    product.contains.map((sens, idx) => (
+                    product.contains.map((sens: string, idx: number) => (
                       <span
                         key={idx}
                         className="bg-red-50 text-red-700 text-sm px-3 py-1 rounded-full font-medium border border-red-100"
@@ -267,7 +267,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
                       לא הוגדר "עלול להכיל"
                     </span>
                   ) : (
-                    product.mayContain.map((sens, idx) => (
+                    product.mayContain.map((sens: string, idx: number) => (
                       <span
                         key={`may-${idx}`}
                         className="bg-amber-50 text-amber-700 text-sm px-3 py-1 rounded-full font-medium border border-amber-100"
