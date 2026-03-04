@@ -351,22 +351,26 @@ const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
                       product.mayContain?.some((allergen) =>
                         selectedRestrictionNames.includes(allergen),
                       )
-                    )
-                      if (!isDisabled && selectedTextures.length > 0) {
-                        // 3. Check Textures: If a texture is selected, the product MUST match it, otherwise it is disabled.
-                        // This rule applies even if it was marked as warning, because texture is a strict requirement.
-                        const selectedTextureName = texturesData.find(
-                          (t) => t.id === selectedTextures[0],
-                        )?.name;
+                    ) {
+                      // Line workers don't have a "showMayContain" toggle, so mayContain means it's disabled.
+                      isDisabled = true;
+                    }
 
-                        if (
-                          selectedTextureName &&
-                          product.texture !== selectedTextureName
-                        ) {
-                          isDisabled = true;
-                          isWarning = false; // Texture mismatch overrides warning
-                        }
+                    // 3. Check Textures: If a texture is selected, the product MUST match it, otherwise it is disabled.
+                    // This rule applies even if it was marked as warning, because texture is a strict requirement.
+                    if (!isDisabled && selectedTextures.length > 0) {
+                      const selectedTextureName = texturesData.find(
+                        (t) => t.id === selectedTextures[0],
+                      )?.name;
+
+                      if (
+                        selectedTextureName &&
+                        product.texture !== selectedTextureName
+                      ) {
+                        isDisabled = true;
+                        isWarning = false; // Texture mismatch overrides warning
                       }
+                    }
 
                     // Determine final state for ProductBig
                     let productState: "regular" | "disabled" | "warning" =
