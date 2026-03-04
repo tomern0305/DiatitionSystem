@@ -91,9 +91,9 @@ const ProductSmall = ({
         </div>
       </div>
 
-      <div className="pt-3 pb-2 px-1 flex-1 flex flex-col justify-between">
+      <div className="pt-3 pb-2 px-1 flex-1 flex flex-col">
         {/* Title */}
-        <div className="mb-2 line-clamp-2 min-h-[40px]">
+        <div className="mb-2 line-clamp-2">
           <h3 className="text-[15px] font-bold text-gray-800 leading-tight tracking-tight">
             {name}
           </h3>
@@ -134,39 +134,77 @@ const ProductSmall = ({
               ))}
             </div>
 
-            {/* Extra Notes Sections */}
-            {allergyNotes && allergyNotes.trim() !== "" && (
-              <div className="flex flex-col bg-red-50/50 p-1.5 rounded-md border border-red-100/50">
-                <span className="text-[9px] text-red-500 font-bold">
-                  הערות אלרגיות
-                </span>
-                <span className="text-[10px] text-gray-700 leading-tight mt-0.5">
-                  {allergyNotes}
-                </span>
-              </div>
-            )}
+            {/* ==== Clean, Minimalist Inline Notes Sections ==== */}
+            <div className="flex flex-col gap-1.5 mt-2 w-full">
+              {allergyNotes && allergyNotes.trim() !== "" && (
+                <div className="flex items-center gap-2 bg-[#F8F9FA] px-3 py-2 rounded-lg w-full">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4 text-[#5F6368] shrink-0"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
+                  </svg>
+                  <span className="text-[11px] text-[#202124] leading-tight flex-1 break-words">
+                    <span className="font-semibold ml-1">אלרגיות:</span>{" "}
+                    {allergyNotes}
+                  </span>
+                </div>
+              )}
 
-            {textureNotes && textureNotes.trim() !== "" && (
-              <div className="flex flex-col bg-blue-50/50 p-1.5 rounded-md border border-blue-100/50">
-                <span className="text-[9px] text-blue-500 font-bold">
-                  הערות מרקם
-                </span>
-                <span className="text-[10px] text-gray-700 leading-tight mt-0.5">
-                  {textureNotes}
-                </span>
-              </div>
-            )}
+              {textureNotes && textureNotes.trim() !== "" && (
+                <div className="flex items-center gap-2 bg-[#F8F9FA] px-3 py-2 rounded-lg w-full">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4 text-[#5F6368] shrink-0"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
+                  </svg>
+                  <span className="text-[11px] text-[#202124] leading-tight flex-1 break-words">
+                    <span className="font-semibold ml-1">מרקם:</span>{" "}
+                    {textureNotes}
+                  </span>
+                </div>
+              )}
 
-            {forbiddenFor && forbiddenFor.trim() !== "" && (
-              <div className="flex flex-col bg-purple-50/50 p-1.5 rounded-md border border-purple-100/50">
-                <span className="text-[9px] text-purple-500 font-bold">
-                  למי אסור
-                </span>
-                <span className="text-[10px] text-gray-700 leading-tight mt-0.5">
-                  {forbiddenFor}
-                </span>
-              </div>
-            )}
+              {forbiddenFor && forbiddenFor.trim() !== "" && (
+                <div className="flex items-center gap-2 bg-[#F8F9FA] px-3 py-2 rounded-lg w-full">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4 text-[#5F6368] shrink-0"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
+                  </svg>
+                  <span className="text-[11px] text-[#202124] leading-tight flex-1 break-words">
+                    <span className="font-semibold ml-1">למי אסור:</span>{" "}
+                    {forbiddenFor}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

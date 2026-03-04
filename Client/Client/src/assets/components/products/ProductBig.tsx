@@ -143,37 +143,37 @@ const ProductBig = ({
 
             {/*Extra Notes Sections TURNED OFF FOR NOW*/}
             {/* 
-            {allergyNotes && allergyNotes.trim() !== "" && (
+              {allergyNotes && allergyNotes.trim() !== "" && (
               <div className="flex flex-col bg-red-50/50 p-1.5 rounded-md border border-red-100/50">
                 <span className="text-[9px] text-red-500 font-bold">
-                  הערות אלרגיות
-                </span>
+                      הערות אלרגיות
+                    </span>
                 <span className="text-[10px] text-gray-700 leading-tight mt-0.5">
-                  {allergyNotes}
-                </span>
-              </div>
-            )}
+                    {allergyNotes}
+                  </span>
+                </div>
+              )}
 
-            {textureNotes && textureNotes.trim() !== "" && (
+              {textureNotes && textureNotes.trim() !== "" && (
               <div className="flex flex-col bg-blue-50/50 p-1.5 rounded-md border border-blue-100/50">
                 <span className="text-[9px] text-blue-500 font-bold">
-                  הערות מרקם
-                </span>
+                      הערות מרקם
+                    </span>
                 <span className="text-[10px] text-gray-700 leading-tight mt-0.5">
-                  {textureNotes}
-                </span>
-              </div>
-            )}
+                    {textureNotes}
+                  </span>
+                </div>
+              )}
 
-            {forbiddenFor && forbiddenFor.trim() !== "" && (
+              {forbiddenFor && forbiddenFor.trim() !== "" && (
               <div className="flex flex-col bg-purple-50/50 p-1.5 rounded-md border border-purple-100/50">
                 <span className="text-[9px] text-purple-500 font-bold">
-                  למי אסור
-                </span>
+                      למי אסור
+                    </span>
                 <span className="text-[10px] text-gray-700 leading-tight mt-0.5">
-                  {forbiddenFor}
-                </span>
-              </div>
+                    {forbiddenFor}
+                  </span>
+                </div>
             )} */}
 
             {/* turned off the properties for now, but we can print them if needed we 
