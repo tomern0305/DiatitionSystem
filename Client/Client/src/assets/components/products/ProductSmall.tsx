@@ -1,4 +1,4 @@
-interface ProductBigProps {
+interface ProductSmallProps {
   image: string;
   name: string;
   iddsi: number;
@@ -13,24 +13,24 @@ interface ProductBigProps {
   texture?: string | null;
   properties?: string[];
   state?: "regular" | "selected" | "disabled" | "warning";
+  textureNotes?: string;
+  allergyNotes?: string;
+  forbiddenFor?: string;
 }
 
-const ProductBig = ({
+const ProductSmall = ({
   image,
   name,
   iddsi,
-  // calories,
-  // protein,
-  // carbs,
-  // fat,
-  // sugares,
-  // sodium,
   contains = [],
   mayContain = [],
   texture,
   properties = [],
   state = "regular",
-}: ProductBigProps) => {
+  textureNotes,
+  allergyNotes,
+  forbiddenFor,
+}: ProductSmallProps) => {
   // Determine classes based on the state
   let baseContainer =
     "bg-white/90 backdrop-blur-2xl border border-gray-200/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]";
@@ -100,102 +100,78 @@ const ProductBig = ({
         </div>
 
         {/* Dietary Tags Section - Softer, more pill-like */}
-        {(contains.length > 0 ||
+        {(texture ||
+          contains.length > 0 ||
           mayContain.length > 0 ||
-          properties.length > 0) && (
-          <div className="flex flex-wrap gap-1 mb-3 mt-0.5">
-            {texture && (
-              <span className="bg-blue-50/80 text-blue-600 border border-blue-100 text-[9px] font-semibold px-1.5 py-0.5 rounded-md flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] leading-none">
-                מרקם {texture}
-              </span>
+          properties.length > 0 ||
+          (textureNotes && textureNotes.trim() !== "") ||
+          (allergyNotes && allergyNotes.trim() !== "") ||
+          (forbiddenFor && forbiddenFor.trim() !== "")) && (
+          <div className="flex flex-col gap-2 mb-3 mt-0.5">
+            <div className="flex flex-wrap gap-1">
+              {texture && (
+                <span className="bg-blue-50/80 text-blue-600 border border-blue-100 text-[9px] font-semibold px-1.5 py-0.5 rounded-md flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] leading-none">
+                  מרקם {texture}
+                </span>
+              )}
+
+              {contains.map((allergen) => (
+                <span
+                  key={`contains-${allergen}`}
+                  className="bg-red-50/80 text-red-600 border border-red-100 text-[9px] font-semibold px-1.5 py-0.5 rounded-md flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] leading-none"
+                >
+                  מכיל {allergen}
+                </span>
+              ))}
+
+              {mayContain.map((allergen) => (
+                <span
+                  key={`maycontain-${allergen}`}
+                  className="bg-orange-50/80 text-orange-600 border border-orange-100 text-[9px] font-semibold px-1.5 py-0.5 rounded-md flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] leading-none"
+                >
+                  עלול להכיל {allergen}
+                </span>
+              ))}
+            </div>
+
+            {/* Extra Notes Sections */}
+            {allergyNotes && allergyNotes.trim() !== "" && (
+              <div className="flex flex-col bg-red-50/50 p-1.5 rounded-md border border-red-100/50">
+                <span className="text-[9px] text-red-500 font-bold">
+                  הערות אלרגיות
+                </span>
+                <span className="text-[10px] text-gray-700 leading-tight mt-0.5">
+                  {allergyNotes}
+                </span>
+              </div>
             )}
 
-            {contains.map((allergen) => (
-              <span
-                key={`contains-${allergen}`}
-                className="bg-red-50/80 text-red-600 border border-red-100 text-[9px] font-semibold px-1.5 py-0.5 rounded-md flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] leading-none"
-              >
-                מכיל {allergen}
-              </span>
-            ))}
+            {textureNotes && textureNotes.trim() !== "" && (
+              <div className="flex flex-col bg-blue-50/50 p-1.5 rounded-md border border-blue-100/50">
+                <span className="text-[9px] text-blue-500 font-bold">
+                  הערות מרקם
+                </span>
+                <span className="text-[10px] text-gray-700 leading-tight mt-0.5">
+                  {textureNotes}
+                </span>
+              </div>
+            )}
 
-            {mayContain.map((allergen) => (
-              <span
-                key={`maycontain-${allergen}`}
-                className="bg-orange-50/80 text-orange-600 border border-orange-100 text-[9px] font-semibold px-1.5 py-0.5 rounded-md flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] leading-none"
-              >
-                עלול להכיל {allergen}
-              </span>
-            ))}
-            {/* turned off the properties for now, but we can print them if needed we 
-                just dont have a way to enter them in the settings page as of now
-                i dont know if we need them */}
-
-            {/* {properties.map((prop, index) => (
-              <span
-                key={`prop-${index}`}
-                className="bg-emerald-50/80 text-emerald-600 border border-emerald-100 text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
-              >
-                {prop}
-              </span>
-            ))} */}
+            {forbiddenFor && forbiddenFor.trim() !== "" && (
+              <div className="flex flex-col bg-purple-50/50 p-1.5 rounded-md border border-purple-100/50">
+                <span className="text-[9px] text-purple-500 font-bold">
+                  למי אסור
+                </span>
+                <span className="text-[10px] text-gray-700 leading-tight mt-0.5">
+                  {forbiddenFor}
+                </span>
+              </div>
+            )}
           </div>
         )}
-
-        {/* Nutritional Stats - Clean, minimalist grid */}
-        {/*<div className="grid grid-cols-3 gap-y-2 gap-x-1 text-center bg-gray-50/70 rounded-xl p-2 border border-gray-100/50 mt-auto">*/}
-        {/*  <div className="flex flex-col">*/}
-        {/*    <span className="text-[9px] text-gray-400 font-semibold truncate">*/}
-        {/*      קלוריות*/}
-        {/*    </span>*/}
-        {/*    <span className="text-[11px] font-bold text-gray-700 leading-none mt-0.5">*/}
-        {/*      {calories}*/}
-        {/*    </span>*/}
-        {/*  </div>*/}
-        {/*  <div className="flex flex-col border-x border-gray-200/50">*/}
-        {/*    <span className="text-[9px] text-gray-400 font-semibold truncate">*/}
-        {/*      חלבון*/}
-        {/*    </span>*/}
-        {/*    <span className="text-[11px] font-bold text-gray-700 leading-none mt-0.5">*/}
-        {/*      {protein}g*/}
-        {/*    </span>*/}
-        {/*  </div>*/}
-        {/*  <div className="flex flex-col">*/}
-        {/*    <span className="text-[9px] text-gray-400 font-semibold truncate">*/}
-        {/*      פחמימות*/}
-        {/*    </span>*/}
-        {/*    <span className="text-[11px] font-bold text-gray-700 leading-none mt-0.5">*/}
-        {/*      {carbs}g*/}
-        {/*    </span>*/}
-        {/*  </div>*/}
-        {/*  <div className="flex flex-col mt-1">*/}
-        {/*    <span className="text-[9px] text-gray-400 font-semibold truncate">*/}
-        {/*      שומן*/}
-        {/*    </span>*/}
-        {/*    <span className="text-[11px] font-bold text-gray-700 leading-none mt-0.5">*/}
-        {/*      {fat}g*/}
-        {/*    </span>*/}
-        {/*  </div>*/}
-        {/*  <div className="flex flex-col border-x border-gray-200/50 mt-1">*/}
-        {/*    <span className="text-[9px] text-gray-400 font-semibold truncate">*/}
-        {/*      סוכר*/}
-        {/*    </span>*/}
-        {/*    <span className="text-[11px] font-bold text-gray-700 leading-none mt-0.5">*/}
-        {/*      {sugares}g*/}
-        {/*    </span>*/}
-        {/*  </div>*/}
-        {/*  <div className="flex flex-col mt-1">*/}
-        {/*    <span className="text-[9px] text-gray-400 font-semibold truncate">*/}
-        {/*      נתרן*/}
-        {/*    </span>*/}
-        {/*    <span className="text-[11px] font-bold text-gray-700 leading-none mt-0.5">*/}
-        {/*      {sodium}mg*/}
-        {/*    </span>*/}
-        {/*  </div>*/}
-        {/*</div>*/}
       </div>
     </div>
   );
 };
 
-export default ProductBig;
+export default ProductSmall;

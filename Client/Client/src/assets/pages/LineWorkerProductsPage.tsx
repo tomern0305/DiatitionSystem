@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import ProductBig from "../components/products/ProductSmall";
+import ProductSmall from "../components/products/ProductSmall";
 import TopBar from "../components/ui/TopBar";
 import Loader from "../components/ui/Loader";
 import type {
@@ -383,7 +383,7 @@ const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
                         className="w-full flex justify-center animate-fade-in-up"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <ProductBig
+                        <ProductSmall
                           name={product.name}
                           image={product.image}
                           iddsi={product.iddsi}
@@ -398,6 +398,9 @@ const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
                           texture={product.texture}
                           properties={product.properties}
                           state={productState}
+                          textureNotes={product.textureNotes}
+                          allergyNotes={product.allergyNotes}
+                          forbiddenFor={product.forbiddenFor}
                         />
                       </div>
                     );

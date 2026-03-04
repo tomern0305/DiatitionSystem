@@ -19,6 +19,9 @@ export interface ProductData {
   company?: string;
   properties?: string[];
   lastEditDate?: Date; // Optional for some views
+  textureNotes?: string;
+  allergyNotes?: string;
+  forbiddenFor?: string;
 }
 
 export interface CategoryData {

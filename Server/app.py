@@ -68,6 +68,9 @@ def get_products():
             "texture_id": p.texture_id,
             "properties": p.properties,
             "company": p.company,
+            "textureNotes": p.texture_notes,
+            "allergyNotes": p.allergy_notes,
+            "forbiddenFor": p.forbidden_for,
             "lastEditDate": p.updated_at.strftime('%Y-%m-%d %H:%M:%S') if p.updated_at else None
         })
     return jsonify(result)
@@ -119,7 +122,10 @@ def add_product():
         may_contain=data.get('mayContain', []),
         texture_id=data.get('texture_id', None),
         properties=data.get('properties', []),
-        company=data.get('company', '')
+        company=data.get('company', ''),
+        texture_notes=data.get('textureNotes', ''),
+        allergy_notes=data.get('allergyNotes', ''),
+        forbidden_for=data.get('forbiddenFor', '')
     )
     
     try:
@@ -153,6 +159,9 @@ def update_product(prod_id):
         if 'texture_id' in data: product.texture_id = data['texture_id']
         if 'properties' in data: product.properties = data['properties']
         if 'company' in data: product.company = data['company']
+        if 'textureNotes' in data: product.texture_notes = data['textureNotes']
+        if 'allergyNotes' in data: product.allergy_notes = data['allergyNotes']
+        if 'forbiddenFor' in data: product.forbidden_for = data['forbiddenFor']
         
         db.session.commit()
         return jsonify({"message": "Product updated successfully"})

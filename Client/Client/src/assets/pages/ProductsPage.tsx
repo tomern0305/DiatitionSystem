@@ -440,6 +440,9 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
                           texture={product.texture}
                           properties={product.properties}
                           state={productState}
+                          textureNotes={product.textureNotes}
+                          allergyNotes={product.allergyNotes}
+                          forbiddenFor={product.forbiddenFor}
                         />
                       </div>
                     );

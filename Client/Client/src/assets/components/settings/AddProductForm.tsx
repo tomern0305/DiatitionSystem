@@ -25,6 +25,9 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     mayContain: [] as string[],
     texture_id: 0,
     company: "",
+    textureNotes: "",
+    allergyNotes: "",
+    forbiddenFor: "",
   });
 
   const [categories, setCategories] = useState<CategoryData[]>([]);
@@ -190,6 +193,9 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
           mayContain: [],
           texture_id: 0,
           company: "",
+          textureNotes: "",
+          allergyNotes: "",
+          forbiddenFor: "",
         });
         onProductAdded();
       })
@@ -347,6 +353,44 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             <option value={6}>6 - רך לחיתוך</option>
             <option value={7}>7 - רגיל</option>
           </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            הערות מרקם
+          </label>
+          <input
+              type="text"
+              name="textureNotes"
+              value={formData.textureNotes}
+              onChange={handleInputChange}
+              className="w-full border border-gray-300 p-2 rounded-md"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            הערות אלרגיות
+          </label>
+          <input
+              type="text"
+              name="allergyNotes"
+              value={formData.allergyNotes}
+              onChange={handleInputChange}
+              className="w-full border border-gray-300 p-2 rounded-md"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            למי אסור
+          </label>
+          <input
+              type="text"
+              name="forbiddenFor"
+              value={formData.forbiddenFor}
+              onChange={handleInputChange}
+              className="w-full border border-gray-300 p-2 rounded-md"
+          />
         </div>
 
         <div>

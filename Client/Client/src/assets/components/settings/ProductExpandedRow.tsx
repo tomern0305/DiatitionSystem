@@ -38,6 +38,9 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
     texture_id: product.texture_id || 0,
     company: product.company || "",
     properties: product.properties || [],
+    textureNotes: product.textureNotes || "",
+    allergyNotes: product.allergyNotes || "",
+    forbiddenFor: product.forbiddenFor || "",
   });
 
   const [sensitivities, setSensitivities] = useState<SensitivityData[]>([]);
@@ -624,6 +627,45 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
                 ))
               )}
             </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-100 mt-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              הערות אלרגיות
+            </label>
+            <textarea
+              name="allergyNotes"
+              value={formData.allergyNotes}
+              onChange={handleInputChange as any}
+              className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none min-h-[80px]"
+              placeholder="הערות אלרגנים נוספות (למשל: בסביבת עבודה אגוזים)"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              הערות מרקם
+            </label>
+            <textarea
+              name="textureNotes"
+              value={formData.textureNotes}
+              onChange={handleInputChange as any}
+              className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none min-h-[80px]"
+              placeholder="הערות לגבי טחינה, ריסוק או סמיכות"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              למי אסור
+            </label>
+            <textarea
+              name="forbiddenFor"
+              value={formData.forbiddenFor}
+              onChange={handleInputChange as any}
+              className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none min-h-[80px]"
+              placeholder="קבוצות סיכון או התוויות נגד"
+            />
           </div>
         </div>
       </div>
