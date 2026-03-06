@@ -21,8 +21,8 @@ const ProductSettingsPage = ({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
-  const fetchData = () => {
-    setLoading(true);
+  const fetchData = (showLoader: boolean = true) => {
+    if (showLoader) setLoading(true);
     Promise.all([
       fetch(`${import.meta.env.VITE_API_URL}/api/products`).then((res) => {
         if (!res.ok) throw new Error("Failed to fetch products");
@@ -36,11 +36,11 @@ const ProductSettingsPage = ({
       .then(([productsData, categoriesData]) => {
         setProducts(productsData);
         setCategories(categoriesData);
-        setLoading(false);
+        if (showLoader) setLoading(false);
       })
       .catch((err) => {
         setError(err.message);
-        setLoading(false);
+        if (showLoader) setLoading(false);
       });
   };
 
@@ -50,7 +50,7 @@ const ProductSettingsPage = ({
 
   const handleProductAdded = () => {
     setIsFormOpen(false);
-    fetchData();
+    fetchData(false);
   };
 
   const handleProductUpdate = async (id: string, updatedData: any) => {
@@ -67,7 +67,7 @@ const ProductSettingsPage = ({
       alert(`שגיאה בעדכון מוצר: ${error.error}`);
       throw new Error(error.error);
     }
-    fetchData();
+    fetchData(false);
   };
 
   const handleProductDelete = async (id: string) => {
@@ -82,7 +82,7 @@ const ProductSettingsPage = ({
       alert(`שגיאה במחיקת מוצר: ${error.error}`);
       throw new Error(error.error);
     }
-    fetchData();
+    fetchData(false);
   };
 
   if (loading)
