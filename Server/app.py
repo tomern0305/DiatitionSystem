@@ -1,3 +1,5 @@
+"""Main Flask application API routing and server initializations."""
+
 import os
 import uuid
 from flask import Flask, jsonify, request, send_from_directory
@@ -7,9 +9,15 @@ from models import db, FoodItem, Category, Sensitivity, Texture
 from sqlalchemy import text
 from openai import OpenAI
 from dotenv import load_dotenv
+from supabase import create_client, Client
 
 load_dotenv()
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get("SUPABASE_ANON_KEY") or os.environ.get("SUPABASE_SERVICE_KEY")
+supabase: Client = create_client(supabase_url, supabase_key)
+
 app = Flask(__name__)
 CORS(app)
 
@@ -41,10 +49,12 @@ with app.app_context():
 # A simple test route
 @app.route('/api/status', methods=['GET'])
 def status():
+    """Simple health check route to verify server status."""
     return jsonify({"status": "Flask is running and connected to PostgreSQL!"})
 
 @app.route('/api/products', methods=['GET'])
 def get_products():
+    """Retrieves all food items and formats them for the frontend."""
     products = FoodItem.query.all()
     result = []
     for p in products:
@@ -79,10 +89,12 @@ def get_products():
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
+    """Serves locally uploaded files (legacy use-case)."""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/api/upload', methods=['POST'])
 def upload_image():
+    """Uploads a product image directly to the Supabase Storage 'products' bucket and returns its public URL."""
     if 'image' not in request.files:
         return jsonify({"error": "No file part"}), 400
     
@@ -94,17 +106,31 @@ def upload_image():
         filename = secure_filename(file.filename)
         # Use UUID to prevent name collisions
         unique_filename = f"{uuid.uuid4().hex}_{filename}"
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-        file.save(file_path)
         
-        # Return the absolute URL pointing to this Flask server
-        image_url = f"{request.host_url}uploads/{unique_filename}"
-        return jsonify({"imageUrl": image_url}), 200
+        try:
+            # Read file from memory buffer
+            file_bytes = file.read()
+            content_type = file.content_type
+            
+            # Upload to Supabase Storage bucket named 'products'
+            supabase.storage.from_("products").upload(
+                path=unique_filename,
+                file=file_bytes,
+                file_options={"content-type": content_type}
+            )
+            
+            # Get the public URL
+            public_url = supabase.storage.from_("products").get_public_url(unique_filename)
+            
+            return jsonify({"imageUrl": public_url}), 200
+        except Exception as e:
+            return jsonify({"error": f"Failed to upload image: {str(e)}"}), 500
 
 # ================= Products API =================
 
 @app.route('/api/products', methods=['POST'])
 def add_product():
+    """Creates a new food product in the database."""
     data = request.json
     
     new_product = FoodItem(
@@ -138,6 +164,7 @@ def add_product():
 
 @app.route('/api/products/<int:prod_id>', methods=['PUT'])
 def update_product(prod_id):
+    """Updates an existing food product's details."""
     product = FoodItem.query.get(prod_id)
     if not product:
         return jsonify({"error": "Product not found"}), 404
@@ -171,14 +198,23 @@ def update_product(prod_id):
 
 @app.route('/api/products/<int:prod_id>', methods=['DELETE'])
 def delete_product(prod_id):
+    """Deletes a food product from the database and its associated image from Supabase Storage."""
     product = FoodItem.query.get(prod_id)
     if not product:
         return jsonify({"error": "Product not found"}), 404
         
     try:
+        # Delete image from Supabase if it exists
+        if product.image_url and "supabase.co/storage/v1/object/public/products/" in product.image_url:
+            filename = product.image_url.split("/")[-1]
+            try:
+                supabase.storage.from_("products").remove([filename])
+            except Exception as e:
+                print(f"Failed to delete image from Supabase: {e}")
+
         db.session.delete(product)
         db.session.commit()
-        return jsonify({"message": "Product deleted successfully"})
+        return jsonify({"message": "Product and associated image deleted successfully"})
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
@@ -187,11 +223,13 @@ def delete_product(prod_id):
 
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
+    """Retrieves all product categories."""
     categories = Category.query.all()
     return jsonify([{"id": c.id, "name": c.name} for c in categories])
 
 @app.route('/api/categories', methods=['POST'])
 def add_category():
+    """Creates a new product category."""
     data = request.json
     name = data.get('name')
     if not name:
@@ -207,6 +245,7 @@ def add_category():
 
 @app.route('/api/categories/<int:cat_id>', methods=['PUT'])
 def update_category(cat_id):
+    """Updates the name of an existing product category."""
     cat = Category.query.get(cat_id)
     if not cat:
         return jsonify({"error": "Category not found"}), 404
@@ -227,6 +266,7 @@ def update_category(cat_id):
 
 @app.route('/api/categories/<int:cat_id>', methods=['DELETE'])
 def delete_category(cat_id):
+    """Deletes a product category, but only if it contains no products."""
     cat = Category.query.get(cat_id)
     if not cat:
         return jsonify({"error": "Category not found"}), 404
@@ -242,11 +282,13 @@ def delete_category(cat_id):
 
 @app.route('/api/sensitivities', methods=['GET'])
 def get_sensitivities():
+    """Retrieves all dietary sensitivities and allergies."""
     sensitivities = Sensitivity.query.all()
     return jsonify([{"id": s.id, "name": s.name} for s in sensitivities])
 
 @app.route('/api/sensitivities', methods=['POST'])
 def add_sensitivity():
+    """Creates a new dietary sensitivity or allergy property."""
     data = request.json
     name = data.get('name')
     if not name:
@@ -262,6 +304,7 @@ def add_sensitivity():
 
 @app.route('/api/sensitivities/<int:sens_id>', methods=['PUT'])
 def update_sensitivity(sens_id):
+    """Updates the name of an existing sensitivity."""
     sens = Sensitivity.query.get(sens_id)
     if not sens:
         return jsonify({"error": "Sensitivity not found"}), 404
@@ -282,6 +325,7 @@ def update_sensitivity(sens_id):
 
 @app.route('/api/sensitivities/<int:sens_id>', methods=['DELETE'])
 def delete_sensitivity(sens_id):
+    """Deletes an existing sensitivity from the database."""
     sens = Sensitivity.query.get(sens_id)
     if not sens:
         return jsonify({"error": "Sensitivity not found"}), 404
@@ -294,11 +338,13 @@ def delete_sensitivity(sens_id):
 
 @app.route('/api/texture', methods=['GET'])
 def get_textures():
+    """Retrieves all food texture definitions."""
     textures = Texture.query.all()
     return jsonify([{"id": s.id, "name": s.name} for s in textures])
 
 @app.route('/api/texture', methods=['POST'])
 def add_texture():
+    """Creates a new food texture definition."""
     data = request.json
     name = data.get('name')
     if not name:
@@ -314,6 +360,7 @@ def add_texture():
 
 @app.route('/api/texture/<int:texture_id>', methods=['PUT'])
 def update_texture(texture_id):
+    """Updates the name of an existing texture."""
     texture = Texture.query.get(texture_id)
     if not texture:
         return jsonify({"error": "Texture not found"}), 404
@@ -334,6 +381,7 @@ def update_texture(texture_id):
 
 @app.route('/api/texture/<int:texture_id>', methods=['DELETE'])
 def delete_texture(texture_id):
+    """Deletes an existing texture from the database."""
     texture = Texture.query.get(texture_id)
     if not texture:
         return jsonify({"error": "Texture not found"}), 404

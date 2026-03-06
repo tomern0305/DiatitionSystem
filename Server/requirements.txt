@@ -6,3 +6,4 @@ Flask-SQLAlchemy
 openai
 python-dotenv
 pgvector
+supabase

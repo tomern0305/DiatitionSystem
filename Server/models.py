@@ -1,3 +1,5 @@
+"""Database models for the Dietitian System using SQLAlchemy."""
+
 from flask_sqlalchemy import SQLAlchemy
 from pgvector.sqlalchemy import Vector
 from sqlalchemy.dialects.postgresql import JSONB
@@ -6,6 +8,7 @@ from datetime import datetime
 db = SQLAlchemy()
 
 class Category(db.Model):
+    """Represents a product category (e.g., Dairy, Meat)."""
     __tablename__ = 'categories'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -16,6 +19,7 @@ class Category(db.Model):
     food_items = db.relationship('FoodItem', backref='category_rel', lazy=True)
 
 class Sensitivity(db.Model):
+    """Represents a dietary sensitivity, allergen, or property (e.g., Gluten, Vegan)."""
     __tablename__ = 'sensitivities'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -23,6 +27,7 @@ class Sensitivity(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Texture(db.Model):
+    """Represents a food texture type (e.g., IDDSI standards)."""
     __tablename__ = 'textures'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -33,6 +38,7 @@ class Texture(db.Model):
     food_items = db.relationship('FoodItem', backref='texture_rel', lazy=True)
 
 class FoodItem(db.Model):
+    """Represents a food product with nutritional values, properties, and AI vectors."""
     __tablename__ = 'food_items'
 
     # --- מידע בסיסי ---
