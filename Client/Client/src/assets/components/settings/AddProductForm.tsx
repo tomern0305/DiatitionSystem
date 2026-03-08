@@ -164,7 +164,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     }
     if (!formData.texture_id || formData.texture_id === 0) {
       setValidationError(
-        "נא לבחור טקסטורת מנה (חובה). לא ניתן לשמור ללא בחירת מרקם.",
+        "נא לבחור מרקם מנה (חובה). לא ניתן לשמור ללא בחירת מרקם.",
       );
       return;
     }
@@ -268,7 +268,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            טקסטורת מנה
+            מרקם מנה
           </label>
           <select
             name="texture_id"

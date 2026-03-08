@@ -168,7 +168,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
     }
     if (!formData.texture_id || formData.texture_id === 0) {
       setValidationError(
-        "נא לבחור טקסטורת מנה (חובה). לא ניתן לשמור ללא בחירת מרקם.",
+        "נא לבחור מרקם מנה (חובה). לא ניתן לשמור ללא בחירת מרקם.",
       );
       return;
     }
@@ -275,7 +275,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             </div>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2 md:col-span-4 mt-2">
-            <div className="text-gray-500 text-sm mb-1">מרקם מוגדרת</div>
+            <div className="text-gray-500 text-sm mb-1">מרקם מוגדר</div>
             <div className="text-lg font-bold text-gray-800">
               {product.texture || "יש לבחור מרקם"}
             </div>
