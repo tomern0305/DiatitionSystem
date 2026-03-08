@@ -392,7 +392,7 @@ const CategorySettingsPage = ({
           {/* Section 3: Textures */}
           <div className="space-y-4">
             <div className="flex justify-between items-center px-2">
-              <h2 className="text-xl font-bold text-gray-800">טקסטורות מנות</h2>
+              <h2 className="text-xl font-bold text-gray-800">מרקם מנות</h2>
               <button
                 onClick={() => setIsAddingTexture(!isAddingTexture)}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm"
@@ -429,7 +429,7 @@ const CategorySettingsPage = ({
                   {textures.length === 0 && (
                     <tr>
                       <td colSpan={2} className="p-8 text-center text-gray-500">
-                        אין טקסטורות לבחירה.
+                        אין מרקמים לבחירה.
                       </td>
                     </tr>
                   )}

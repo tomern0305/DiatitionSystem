@@ -30,7 +30,7 @@ const AddTextureForm: React.FC<AddTextureFormProps> = ({ onAdd }) => {
     >
       <div className="flex-1 w-full">
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          שם טקסטורת מנה חדשה
+          שם מרקם מנה חדש
         </label>
         <input
           type="text"
