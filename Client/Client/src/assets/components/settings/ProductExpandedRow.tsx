@@ -168,7 +168,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
     }
     if (!formData.texture_id || formData.texture_id === 0) {
       setValidationError(
-        "נא לבחור טקסטורת מנה (חובה). לא ניתן לשמור ללא בחירת טקסטורה.",
+        "נא לבחור טקסטורת מנה (חובה). לא ניתן לשמור ללא בחירת מרקם.",
       );
       return;
     }
@@ -275,9 +275,9 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             </div>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2 md:col-span-4 mt-2">
-            <div className="text-gray-500 text-sm mb-1">טקסטורה מוגדרת</div>
+            <div className="text-gray-500 text-sm mb-1">מרקם מוגדרת</div>
             <div className="text-lg font-bold text-gray-800">
-              {product.texture || "יש לבחור טקסטורה"}
+              {product.texture || "יש לבחור מרקם"}
             </div>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2 md:col-span-4 mt-2">
@@ -391,7 +391,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
-            טקסטורה
+            מרקם
           </label>
           <select
             name="texture_id"
@@ -399,7 +399,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
             onChange={handleInputChange}
             className="w-full border border-gray-300 p-2.5 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all outline-none"
           >
-            <option value={0}>יש לבחור טקסטורה</option>
+            <option value={0}>יש לבחור מרקם</option>
             {textures.map((txt) => (
               <option key={txt.id} value={txt.id}>
                 {txt.name}

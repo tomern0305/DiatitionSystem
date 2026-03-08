@@ -164,7 +164,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     }
     if (!formData.texture_id || formData.texture_id === 0) {
       setValidationError(
-        "נא לבחור טקסטורת מנה (חובה). לא ניתן לשמור ללא בחירת טקסטורה.",
+        "נא לבחור טקסטורת מנה (חובה). לא ניתן לשמור ללא בחירת מרקם.",
       );
       return;
     }
@@ -276,7 +276,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             onChange={handleInputChange}
             className="w-full border border-gray-300 p-2 rounded-md"
           >
-            <option value={0}>יש לבחור טקסטורה</option>
+            <option value={0}>יש לבחור מרקם</option>
             {textures.map((txt) => (
               <option key={txt.id} value={txt.id}>
                 {txt.name}
@@ -360,11 +360,11 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             הערות מרקם
           </label>
           <input
-              type="text"
-              name="textureNotes"
-              value={formData.textureNotes}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 p-2 rounded-md"
+            type="text"
+            name="textureNotes"
+            value={formData.textureNotes}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 p-2 rounded-md"
           />
         </div>
 
@@ -373,11 +373,11 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             הערות אלרגיות
           </label>
           <input
-              type="text"
-              name="allergyNotes"
-              value={formData.allergyNotes}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 p-2 rounded-md"
+            type="text"
+            name="allergyNotes"
+            value={formData.allergyNotes}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 p-2 rounded-md"
           />
         </div>
         <div>
@@ -385,11 +385,11 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
             למי אסור
           </label>
           <input
-              type="text"
-              name="forbiddenFor"
-              value={formData.forbiddenFor}
-              onChange={handleInputChange}
-              className="w-full border border-gray-300 p-2 rounded-md"
+            type="text"
+            name="forbiddenFor"
+            value={formData.forbiddenFor}
+            onChange={handleInputChange}
+            className="w-full border border-gray-300 p-2 rounded-md"
           />
         </div>
 

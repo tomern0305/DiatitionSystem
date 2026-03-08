@@ -225,7 +225,7 @@ const CategorySettingsPage = ({
       setIsAddingTexture(false);
       fetchTextures(false);
     } catch (err: any) {
-      alert(`שגיאה בהוספת טקסטורה: ${err.message}`);
+      alert(`שגיאה בהוספת מרקם: ${err.message}`);
     }
   };
 
@@ -244,12 +244,12 @@ const CategorySettingsPage = ({
 
       fetchTextures(false);
     } catch (err: any) {
-      alert(`שגיאה בעדכון טקסטורה: ${err.message}`);
+      alert(`שגיאה בעדכון מרקם: ${err.message}`);
     }
   };
 
   const handleDeleteTexture = async (id: number) => {
-    if (!window.confirm("האם אתה בטוח שברצונך למחוק טקסטורה זו?")) return;
+    if (!window.confirm("האם אתה בטוח שברצונך למחוק מרקם זו?")) return;
 
     try {
       const res = await fetch(
@@ -397,7 +397,7 @@ const CategorySettingsPage = ({
                 onClick={() => setIsAddingTexture(!isAddingTexture)}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm"
               >
-                {isAddingTexture ? "ביטול" : "הוסף טקסטורה"}
+                {isAddingTexture ? "ביטול" : "הוסף מרקם"}
               </button>
             </div>
 
@@ -410,7 +410,7 @@ const CategorySettingsPage = ({
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="p-4 font-bold text-gray-600 text-sm w-full">
-                      שם הטקסטורה
+                      שם מרקם
                     </th>
                     <th className="p-4 font-bold text-gray-600 text-sm text-center">
                       פעולות
