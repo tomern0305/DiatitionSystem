@@ -5,9 +5,16 @@ import CategoryRow from "../components/settings/CategoryRow";
 import AddSensitivityForm from "../components/settings/AddSensitivityForm";
 import SensitivityRow from "../components/settings/SensitivityRow";
 import AddTextureForm from "../components/settings/AddTextureForm";
+import AddDietForm from "../components/settings/AddDietForm";
 import TextureRow from "../components/settings/TextureRow";
+import DietRow from "../components/settings/DietRow";
 import Loader from "../components/ui/Loader";
-import type { CategoryData, SensitivityData, TextureData } from "../types";
+import type {
+  CategoryData,
+  SensitivityData,
+  TextureData,
+  DietData,
+} from "../types";
 
 interface CategorySettingsPageProps {
   setIsSideMenuOpen?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -19,19 +26,23 @@ const CategorySettingsPage = ({
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [sensitivities, setSensitivities] = useState<SensitivityData[]>([]);
   const [textures, setTextures] = useState<TextureData[]>([]);
+  const [diets, setDiets] = useState<DietData[]>([]);
 
   const [loadingCats, setLoadingCats] = useState(true);
   const [loadingSens, setLoadingSens] = useState(true);
   const [loadingTextures, setLoadingTextures] = useState(true);
+  const [loadingDiets, setLoadingDiets] = useState(true);
 
   const [errorCats, setErrorCats] = useState<string | null>(null);
   const [errorSens, setErrorSens] = useState<string | null>(null);
   const [errorTextures, setErrorTextures] = useState<string | null>(null);
+  const [errorDiets, setErrorDiets] = useState<string | null>(null);
 
   // Form State
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [isAddingSensitivity, setIsAddingSensitivity] = useState(false);
   const [isAddingTexture, setIsAddingTexture] = useState(false);
+  const [isAddingDiet, setIsAddingDiet] = useState(false);
 
   const fetchCategories = (showLoader: boolean = true) => {
     if (showLoader) setLoadingCats(true);
@@ -84,10 +95,28 @@ const CategorySettingsPage = ({
       });
   };
 
+  const fetchDiets = (showLoader: boolean = true) => {
+    if (showLoader) setLoadingDiets(true);
+    fetch(`${import.meta.env.VITE_API_URL}/api/diets`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch diets");
+        return res.json();
+      })
+      .then((data) => {
+        setDiets(data);
+        if (showLoader) setLoadingDiets(false);
+      })
+      .catch((err) => {
+        setErrorDiets(err.message);
+        if (showLoader) setLoadingDiets(false);
+      });
+  };
+
   useEffect(() => {
     fetchCategories();
     fetchSensitivities();
     fetchTextures();
+    fetchDiets();
   }, []);
 
   // --- Category Handlers ---
@@ -266,17 +295,72 @@ const CategorySettingsPage = ({
       alert(`לא ניתן למחוק: ${err.message}`);
     }
   };
+  // --- Diet Handlers ---
+  const handleAddDietSubmit = async (name: string) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/diets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add diet");
 
-  if (loadingCats || loadingSens || loadingTextures)
+      setIsAddingDiet(false);
+      fetchDiets(false);
+    } catch (err: any) {
+      alert(`שגיאה בהוספת דיאטה: ${err.message}`);
+    }
+  };
+
+  const handleEditDietSubmit = async (id: number, name: string) => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/diets/${id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.trim() }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update diet");
+
+      fetchDiets(false);
+    } catch (err: any) {
+      alert(`שגיאה בעדכון דיאטה: ${err.message}`);
+    }
+  };
+
+  const handleDeleteDiet = async (id: number) => {
+    if (!window.confirm("האם אתה בטוח שברצונך למחוק דיאטה זו?")) return;
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/diets/${id}`,
+        {
+          method: "DELETE",
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete diet");
+
+      fetchDiets(false);
+    } catch (err: any) {
+      alert(`לא ניתן למחוק: ${err.message}`);
+    }
+  };
+
+  if (loadingCats || loadingSens || loadingTextures || loadingDiets)
     return (
       <div className="p-8 text-center bg-gray-50 min-h-screen" dir="rtl">
         <Loader text="טוען נתונים..." />
       </div>
     );
-  if (errorCats || errorSens || errorTextures)
+  if (errorCats || errorSens || errorTextures || errorDiets)
     return (
       <div className="p-8 text-center text-red-500" dir="rtl">
-        שגיאה: {errorCats || errorSens || errorTextures}
+        שגיאה: {errorCats || errorSens || errorTextures || errorDiets}
       </div>
     );
 
@@ -430,6 +514,53 @@ const CategorySettingsPage = ({
                     <tr>
                       <td colSpan={2} className="p-8 text-center text-gray-500">
                         אין מרקמים לבחירה.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Section 4: Diets */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center px-2">
+              <h2 className="text-xl font-bold text-gray-800">דיאטות</h2>
+              <button
+                onClick={() => setIsAddingDiet(!isAddingDiet)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm"
+              >
+                {isAddingDiet ? "ביטול" : "הוסף דיאטה"}
+              </button>
+            </div>
+
+            {isAddingDiet && <AddDietForm onAdd={handleAddDietSubmit} />}
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+              <table className="w-full text-right border-collapse min-w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="p-4 font-bold text-gray-600 text-sm w-full">
+                      שם דיאטה
+                    </th>
+                    <th className="p-4 font-bold text-gray-600 text-sm text-center">
+                      פעולות
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {diets.map((diet) => (
+                    <DietRow
+                      key={diet.id}
+                      diet={diet}
+                      onEdit={handleEditDietSubmit}
+                      onDelete={handleDeleteDiet}
+                    />
+                  ))}
+                  {diets.length === 0 && (
+                    <tr>
+                      <td colSpan={2} className="p-8 text-center text-gray-500">
+                        אין דיאטות לבחירה.
                       </td>
                     </tr>
                   )}

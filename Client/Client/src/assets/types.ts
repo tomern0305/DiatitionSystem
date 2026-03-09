@@ -39,6 +39,11 @@ export interface TexturesData {
   name: string;
 }
 
+export interface DietData {
+  id: number;
+  name: string;
+}
+
 // Keeping the older alias for backward compatibility until refactored fully
 export interface SensitivityData {
   id: number;

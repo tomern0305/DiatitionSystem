@@ -5,7 +5,7 @@ import uuid
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from models import db, FoodItem, Category, Sensitivity, Texture
+from models import db, FoodItem, Category, Sensitivity, Texture, Diet
 from sqlalchemy import text
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -389,6 +389,62 @@ def delete_texture(texture_id):
     db.session.delete(texture)
     db.session.commit()
     return jsonify({"message": "Texture deleted"})
+
+# ================= Diets API =================
+
+@app.route('/api/diets', methods=['GET'])
+def get_diets():
+    """Retrieves all food diets definitions."""
+    diets = Diet.query.all()
+    return jsonify([{"id": s.id, "name": s.name} for s in diets])
+
+@app.route('/api/diets', methods=['POST'])
+def add_diet():
+    """Creates a new food diet definition."""
+    data = request.json
+    name = data.get('name')
+    if not name:
+        return jsonify({"error": "Diet name is required"}), 400
+        
+    if Diet.query.filter_by(name=name).first():
+        return jsonify({"error": "Diet already exists"}), 400
+        
+    new_diet = Diet(name=name)
+    db.session.add(new_diet)
+    db.session.commit()
+    return jsonify({"message": "Diet created", "id": new_diet.id}), 201
+
+@app.route('/api/diets/<int:diet_id>', methods=['PUT'])
+def update_diet(diet_id):
+    """Updates the name of an existing diet."""
+    diet = Diet.query.get(diet_id)
+    if not diet:
+        return jsonify({"error": "Diet not found"}), 404
+        
+    data = request.json
+    new_name = data.get('name')
+    if not new_name:
+        return jsonify({"error": "New name is required"}), 400
+        
+    # Check if name already taken by another diet
+    existing = Diet.query.filter_by(name=new_name).first()
+    if existing and existing.id != diet_id:
+        return jsonify({"error": "Diet name already exists"}), 400
+        
+    diet.name = new_name
+    db.session.commit()
+    return jsonify({"message": "Diet updated"})
+
+@app.route('/api/diets/<int:diet_id>', methods=['DELETE'])
+def delete_diet(diet_id):
+    """Deletes an existing diet from the database."""
+    diet = Diet.query.get(diet_id)
+    if not diet:
+        return jsonify({"error": "Diet not found"}), 404
+        
+    db.session.delete(diet)
+    db.session.commit()
+    return jsonify({"message": "Diet deleted"})
 
 # ================= Database Migration API =================
 

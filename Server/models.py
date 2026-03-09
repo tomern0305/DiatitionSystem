@@ -37,6 +37,14 @@ class Texture(db.Model):
     # Relationship to food items
     food_items = db.relationship('FoodItem', backref='texture_rel', lazy=True)
 
+class Diet(db.Model):
+    """Represents a food diet type (e.g., IDDSI standards)."""
+    __tablename__ = 'diets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 class FoodItem(db.Model):
     """Represents a food product with nutritional values, properties, and AI vectors."""
     __tablename__ = 'food_items'
