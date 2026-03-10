@@ -54,3 +54,28 @@ export interface TextureData {
   id: number;
   name: string;
 }
+
+/** Represents a saved meal as returned by GET /api/meals and GET /api/meals/:id. */
+export interface MealData {
+  id: number;
+  name: string;
+  description: string;
+  diet_id: number | null;
+  diet_name: string | null;
+  product_ids: number[];
+  nutrition: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    sugares: number;
+    sodium: number;
+  };
+  filters: {
+    restriction_ids: number[];
+    texture_ids: number[];
+    show_may_contain: boolean;
+  };
+  created_at: string;
+  updated_at: string;
+}

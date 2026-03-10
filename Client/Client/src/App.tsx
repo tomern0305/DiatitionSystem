@@ -6,6 +6,9 @@ import ProductSettingsPage from "./assets/pages/ProductSettingsPage";
 import CategorySettingsPage from "./assets/pages/CategorySettingsPage";
 import LineWorkerProductsPage from "./assets/pages/LineWorkerProductsPage.tsx";
 
+import CreateMealPage from "./assets/pages/CreateMealPage";
+import MealsCatalogPage from "./assets/pages/MealsCatalogPage";
+
 const App = () => {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
 
@@ -35,6 +38,14 @@ const App = () => {
             element={
               <CategorySettingsPage setIsSideMenuOpen={setIsSideMenuOpen} />
             }
+          />
+          <Route
+            path="/meals/create"
+            element={<CreateMealPage setIsSideMenuOpen={setIsSideMenuOpen} />}
+          />
+          <Route
+            path="/meals"
+            element={<MealsCatalogPage setIsSideMenuOpen={setIsSideMenuOpen} />}
           />
         </Routes>
       </main>

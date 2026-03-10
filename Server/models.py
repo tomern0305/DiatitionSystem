@@ -88,3 +88,38 @@ class FoodItem(db.Model):
     # --- בקרה ומעקב (Audit) ---
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Meal(db.Model):
+    """Represents a composed meal built from food items, including its nutritional summary and the filter state used at creation."""
+    __tablename__ = 'meals'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    name        = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+
+    # FK to Diet — optional; a meal may not belong to any diet
+    diet_id = db.Column(db.Integer, db.ForeignKey('diets.id'), nullable=True)
+    diet    = db.relationship('Diet', backref='meals', lazy=True)
+
+    # Ordered list of food_item IDs that make up this meal (JSONB preserves order)
+    product_ids = db.Column(JSONB, default=[])
+
+    # ── Pre-computed nutrition totals (snapshot at save time) ────────────────
+    total_calories = db.Column(db.Float, default=0.0)
+    total_protein  = db.Column(db.Float, default=0.0)
+    total_carbs    = db.Column(db.Float, default=0.0)
+    total_fat      = db.Column(db.Float, default=0.0)
+    total_sugars   = db.Column(db.Float, default=0.0)
+    total_sodium   = db.Column(db.Float, default=0.0)
+
+    # ── Filter state that was active when the meal was created ───────────────
+    # IDs of the sensitivity (allergy) filters that were selected
+    filter_restriction_ids = db.Column(JSONB, default=[])
+    # ID(s) of the texture filters that were selected (usually 0 or 1 item)
+    filter_texture_ids     = db.Column(JSONB, default=[])
+    # Whether "may contain" products were included in the library at save time
+    filter_show_may_contain = db.Column(db.Boolean, default=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

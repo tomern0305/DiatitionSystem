@@ -133,22 +133,73 @@ const SideMenu = ({ isOpen, setIsOpen }: SideMenuProps) => {
               className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-blue-50 hover:text-blue-600 transition-all font-semibold text-gray-600 bg-gray-50/50"
             >
               <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-5 h-5"
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5"
               >
                 <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
                 <path d="M7 2v20" />
                 <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
               </svg>
               עובד פס
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/meals"
+              onClick={toggleMenu}
+              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-all font-semibold text-gray-600 bg-gray-50/50"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5 text-emerald-500"
+              >
+                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                <rect width="6" height="4" x="9" y="3" rx="1" />
+                <path d="M9 12h6" />
+                <path d="M9 16h6" />
+              </svg>
+              קטלוג ארוחות
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/meals/create"
+              onClick={toggleMenu}
+              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-all font-semibold text-gray-600 bg-gray-50/50"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5 text-emerald-500"
+              >
+                <path d="M4 10h16" />
+                <path d="M4 14h16" />
+                <path d="M12 4v16" />
+              </svg>
+              הרכבת ארוחה
             </Link>
           </li>
         </ul>
