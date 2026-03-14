@@ -93,10 +93,10 @@ const Toast: React.FC<ToastProps> = ({ message, type, onDismiss }) => {
 
       <style>{`
         @keyframes slide-down {
-          from { opacity: 0; transform: translate(-50%, -16px); }
-          to   { opacity: 1; transform: translate(-50%, 0); }
+          from { opacity: 0; top: -1rem; }
+          to   { opacity: 1; top: 1.5rem; }
         }
-        .animate-slide-down { animation: slide-down 0.25s ease-out; }
+        .animate-slide-down { animation: slide-down 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       `}</style>
     </div>
   );
