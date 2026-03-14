@@ -180,7 +180,7 @@ const TexturesTableSection = () => {
         <Toast
           message={toast.message}
           type={toast.type}
-          onClose={() => setToast(null)}
+          onDismiss={() => setToast(null)}
         />
       )}
       <div className="flex justify-between items-center px-2">
