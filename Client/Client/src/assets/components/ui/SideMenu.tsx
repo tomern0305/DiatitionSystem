@@ -56,21 +56,16 @@ const SideMenu = ({ isOpen, setIsOpen }: SideMenuProps) => {
             <Link
               to="/"
               onClick={toggleMenu}
-              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-blue-50 hover:text-blue-600 transition-all font-semibold text-gray-600 bg-gray-50/50"
+              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-gray-100 hover:text-gray-900 transition-all font-semibold text-gray-700 bg-gray-50/50"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5"
+                fill="currentColor"
+                className="w-5 h-5 text-gray-700"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"
-                />
+                <path d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" />
+                <path d="m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z" />
               </svg>
               קטלוג מוצרים
             </Link>
@@ -79,25 +74,18 @@ const SideMenu = ({ isOpen, setIsOpen }: SideMenuProps) => {
             <Link
               to="/settings"
               onClick={toggleMenu}
-              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-blue-50 hover:text-blue-600 transition-all font-semibold text-gray-600 bg-gray-50/50"
+              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-gray-100 hover:text-gray-900 transition-all font-semibold text-gray-700 bg-gray-50/50"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5"
+                fill="currentColor"
+                className="w-5 h-5 text-gray-700"
               >
                 <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  fillRule="evenodd"
+                  d="M11.828 2.25c-.916 0-1.699.663-1.85 1.567l-.091.549a.798.798 0 0 1-.517.608 7.45 7.45 0 0 0-.478.198.798.798 0 0 1-.796-.064l-.453-.324a1.875 1.875 0 0 0-2.416.2l-.243.243a1.875 1.875 0 0 0-.2 2.416l.324.453a.798.798 0 0 1 .064.796 7.448 7.448 0 0 0-.198.478.798.798 0 0 1-.608.517l-.55.092a1.875 1.875 0 0 0-1.566 1.849v.344c0 .916.663 1.699 1.567 1.85l.549.091c.281.047.508.25.608.517.06.162.127.321.198.478a.798.798 0 0 1-.064.796l-.324.453a1.875 1.875 0 0 0 .2 2.416l.243.243c.648.648 1.67.733 2.416.2l.453-.324a.798.798 0 0 1 .796-.064c.157.071.316.137.478.198.267.1.47.327.517.608l.092.55c.15.903.932 1.566 1.849 1.566h.344c.916 0 1.699-.663 1.85-1.567l.091-.549a.798.798 0 0 1 .517-.608 7.52 7.52 0 0 0 .478-.198.798.798 0 0 1 .796.064l.453.324a1.875 1.875 0 0 0 2.416-.2l.243-.243c.648-.648.733-1.67.2-2.416l-.324-.453a.798.798 0 0 1-.064-.796c-.071-.157-.137-.316-.198-.478a.798.798 0 0 1 .608-.517l.55-.091a1.875 1.875 0 0 0 1.566-1.85v-.344c0-.916-.663-1.699-1.567-1.85l-.549-.091a.798.798 0 0 1-.608-.517 7.507 7.507 0 0 0-.198-.478.798.798 0 0 1 .064-.796l.324-.453a1.875 1.875 0 0 0-.2-2.416l-.243-.243a1.875 1.875 0 0 0-2.416-.2l-.453.324a.798.798 0 0 1-.796.064 7.462 7.462 0 0 0-.478-.198.798.798 0 0 1-.517-.608l-.092-.55a1.875 1.875 0 0 0-1.85-1.566h-.344ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z"
+                  clipRule="evenodd"
                 />
               </svg>
               ניהול מוצרים
@@ -107,20 +95,18 @@ const SideMenu = ({ isOpen, setIsOpen }: SideMenuProps) => {
             <Link
               to="/settings/categories"
               onClick={toggleMenu}
-              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-blue-50 hover:text-blue-600 transition-all font-semibold text-gray-600 bg-gray-50/50"
+              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-gray-100 hover:text-gray-900 transition-all font-semibold text-gray-700 bg-gray-50/50"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5"
+                fill="currentColor"
+                className="w-5 h-5 text-gray-700"
               >
                 <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                  fillRule="evenodd"
+                  d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Zm14.25 6a.75.75 0 0 1-.75.75h-9a.75.75 0 0 1 0-1.5h9a.75.75 0 0 1 .75.75Zm0-3.75a.75.75 0 0 1-.75.75h-9a.75.75 0 0 1 0-1.5h9a.75.75 0 0 1 .75.75Zm-9 8.25a.75.75 0 1 0 0-1.5h9a.75.75 0 1 0 0 1.5h-9Z"
+                  clipRule="evenodd"
                 />
               </svg>
               ניהול משתנים
@@ -130,23 +116,15 @@ const SideMenu = ({ isOpen, setIsOpen }: SideMenuProps) => {
             <Link
               to="/lineworker"
               onClick={toggleMenu}
-              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-blue-50 hover:text-blue-600 transition-all font-semibold text-gray-600 bg-gray-50/50"
+              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-gray-100 hover:text-gray-900 transition-all font-semibold text-gray-700 bg-gray-50/50"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
                 viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-5 h-5"
+                fill="currentColor"
+                className="w-5 h-5 text-gray-700"
               >
-                <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-                <path d="M7 2v20" />
-                <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+                <path d="M4.5 6.375a4.125 4.125 0 1 1 8.25 0 4.125 4.125 0 0 1-8.25 0ZM14.25 8.625a3.375 3.375 0 1 1 6.75 0 3.375 3.375 0 0 1-6.75 0ZM1.5 19.125a7.125 7.125 0 0 1 14.25 0v2.813l-1.5.375a5.625 5.625 0 0 0-11.25 0l-1.5-.375v-2.813ZM16.946 19.125a6.621 6.621 0 0 1-5.118-2.58A6.375 6.375 0 0 0 18.75 12a10.875 10.875 0 0 1 2.946 5.86v3.25l-4.75-.487v-1.5Z" />
               </svg>
               עובד פס
             </Link>
@@ -155,24 +133,16 @@ const SideMenu = ({ isOpen, setIsOpen }: SideMenuProps) => {
             <Link
               to="/meals"
               onClick={toggleMenu}
-              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-all font-semibold text-gray-600 bg-gray-50/50"
+              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-gray-100 hover:text-gray-900 transition-all font-semibold text-gray-700 bg-gray-50/50"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
                 viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-5 h-5 text-emerald-500"
+                fill="currentColor"
+                className="w-5 h-5 text-gray-700"
               >
-                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-                <rect width="6" height="4" x="9" y="3" rx="1" />
-                <path d="M9 12h6" />
-                <path d="M9 16h6" />
+                <path d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" />
+                <path d="m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z" />
               </svg>
               קטלוג ארוחות
             </Link>
@@ -181,23 +151,19 @@ const SideMenu = ({ isOpen, setIsOpen }: SideMenuProps) => {
             <Link
               to="/meals/create"
               onClick={toggleMenu}
-              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-emerald-50 hover:text-emerald-600 transition-all font-semibold text-gray-600 bg-gray-50/50"
+              className="flex items-center gap-3 py-3 px-4 rounded-xl cursor-pointer hover:bg-gray-100 hover:text-gray-900 transition-all font-semibold text-gray-700 bg-gray-50/50"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
                 viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-5 h-5 text-emerald-500"
+                fill="currentColor"
+                className="w-5 h-5 text-gray-700"
               >
-                <path d="M4 10h16" />
-                <path d="M4 14h16" />
-                <path d="M12 4v16" />
+                <path
+                  fillRule="evenodd"
+                  d="M12 3.75a.75.75 0 0 1 .75.75v6.75h6.75a.75.75 0 0 1 0 1.5h-6.75v6.75a.75.75 0 0 1-1.5 0v-6.75H4.5a.75.75 0 0 1 0-1.5h6.75V4.5a.75.75 0 0 1 .75-.75Z"
+                  clipRule="evenodd"
+                />
               </svg>
               הרכבת ארוחה
             </Link>

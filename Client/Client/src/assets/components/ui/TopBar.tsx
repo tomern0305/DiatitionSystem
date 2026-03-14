@@ -32,7 +32,7 @@ const TopBar = ({ title, setIsSideMenuOpen, children }: TopBarProps) => {
             </svg>
           </button>
         )}
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight m-0">
+        <h1 className="text-2xl sm:text-3xl font-Heebo text-gray-900 m-0">
           {title}
         </h1>
       </div>
