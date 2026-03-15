@@ -21,11 +21,6 @@ interface ProductLibraryProps {
   onToggleMayContain: () => void;
   /** Called when the user clicks on a product row to add it to the meal. */
   onAddProduct: (p: ProductData) => void;
-  /**
-   * When true the component fills its parent container (used inside the edit drawer).
-   * When false (default) it uses sticky positioning + fixed viewport height for CreateMealPage.
-   */
-  fillHeight?: boolean;
 }
 
 const ProductLibrary: React.FC<ProductLibraryProps> = ({
@@ -41,16 +36,10 @@ const ProductLibrary: React.FC<ProductLibraryProps> = ({
   onToggleTexture,
   onToggleMayContain,
   onAddProduct,
-  fillHeight = false,
 }) => {
   return (
     <div
-      className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden"
-      style={
-        fillHeight
-          ? { height: "100%" }
-          : { height: "calc(100vh - 9rem)", position: "sticky", top: "1.5rem" }
-      }
+      className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden"
     >
       {/* ── Header + search ──────────────────────────────────────────────── */}
       <div className="px-6 pt-6 pb-4 border-b border-gray-100 shrink-0">

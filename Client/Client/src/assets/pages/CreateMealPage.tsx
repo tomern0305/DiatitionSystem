@@ -244,49 +244,57 @@ const CreateMealPage: React.FC<CreateMealPageProps> = ({
         />
 
         <div className="flex flex-col xl:flex-row gap-6 items-start">
-          {/* Pane A — builder: summary → form → ingredients (right in RTL) */}
-          <div className="flex-1 flex flex-col gap-6">
-            <MealNutritionSummary
-              totalCalories={totals.calories}
-              macros={macros}
-            />
-            <MealDetailsForm
-              mealName={mealName}
-              mealDescription={mealDescription}
-              selectedDietId={selectedDietId}
-              diets={diets}
-              onMealNameChange={setMealName}
-              onMealDescriptionChange={setMealDescription}
-              onDietChange={setSelectedDietId}
-            />
-            <MealIngredientsList
-              selectedProducts={selectedProducts}
-              saving={saving}
-              canSave={
-                selectedProducts.length > 0 && mealName.trim().length > 0
-              }
-              onRemove={removeProduct}
-              onClearAll={() => setSelectedProducts([])}
-              onSave={handleSave}
-            />
+          {/* Pane A — builder: summary (short) + ingredients (flex-1) */}
+          <div className="flex-1 flex flex-col gap-6 w-full xl:sticky xl:top-6 xl:h-[1000px] min-h-0">
+            <div className="shrink-0">
+              <MealNutritionSummary
+                totalCalories={totals.calories}
+                macros={macros}
+              />
+            </div>
+            <div className="flex-1 min-h-0">
+              <MealIngredientsList
+                selectedProducts={selectedProducts}
+                saving={saving}
+                canSave={
+                  selectedProducts.length > 0 && mealName.trim().length > 0
+                }
+                onRemove={removeProduct}
+                onClearAll={() => setSelectedProducts([])}
+                onSave={handleSave}
+              />
+            </div>
           </div>
 
-          {/* Pane B — sticky product library (left in RTL) */}
-          <div className="w-full xl:w-[46%]">
-            <ProductLibrary
-              availableProducts={availableProducts}
-              restrictionsData={restrictionsData}
-              texturesData={texturesData}
-              searchTerm={searchTerm}
-              selectedRestrictions={selectedRestrictions}
-              selectedTextures={selectedTextures}
-              showMayContain={showMayContain}
-              onSearchChange={setSearchTerm}
-              onToggleRestriction={toggleRestriction}
-              onToggleTexture={toggleTexture}
-              onToggleMayContain={() => setShowMayContain((v) => !v)}
-              onAddProduct={addProductToMeal}
-            />
+          {/* Pane B — library: form (short) + product library (flex-1) */}
+          <div className="w-full xl:w-[46%] flex flex-col gap-6 xl:sticky xl:top-6 xl:h-[1000px] min-h-0">
+            <div className="shrink-0">
+              <MealDetailsForm
+                mealName={mealName}
+                mealDescription={mealDescription}
+                selectedDietId={selectedDietId}
+                diets={diets}
+                onMealNameChange={setMealName}
+                onMealDescriptionChange={setMealDescription}
+                onDietChange={setSelectedDietId}
+              />
+            </div>
+            <div className="flex-1 min-h-0">
+              <ProductLibrary
+                availableProducts={availableProducts}
+                restrictionsData={restrictionsData}
+                texturesData={texturesData}
+                searchTerm={searchTerm}
+                selectedRestrictions={selectedRestrictions}
+                selectedTextures={selectedTextures}
+                showMayContain={showMayContain}
+                onSearchChange={setSearchTerm}
+                onToggleRestriction={toggleRestriction}
+                onToggleTexture={toggleTexture}
+                onToggleMayContain={() => setShowMayContain((v) => !v)}
+                onAddProduct={addProductToMeal}
+              />
+            </div>
           </div>
         </div>
       </div>

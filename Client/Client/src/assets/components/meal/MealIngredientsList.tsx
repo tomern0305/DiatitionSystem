@@ -25,9 +25,9 @@ const MealIngredientsList: React.FC<MealIngredientsListProps> = ({
   onSave,
 }) => {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden">
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+      <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 shrink-0">
         <h3 className="text-gray-800 font-bold text-lg">מרכיבי הארוחה</h3>
         <div className="flex items-center gap-2">
           {selectedProducts.length > 0 && (
@@ -45,9 +45,9 @@ const MealIngredientsList: React.FC<MealIngredientsListProps> = ({
       </div>
 
       {/* ── Scrollable list ─────────────────────────────────────────────── */}
-      <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto custom-scrollbar">
+      <div className="divide-y divide-gray-100 flex-1 overflow-y-auto custom-scrollbar">
         {selectedProducts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-3">
+          <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-gray-400 gap-3 py-12">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-10 w-10 text-gray-200"
@@ -153,7 +153,7 @@ const MealIngredientsList: React.FC<MealIngredientsListProps> = ({
       </div>
 
       {/* ── Save button ─────────────────────────────────────────────────── */}
-      <div className="px-6 py-4 border-t border-gray-100">
+      <div className="px-6 py-4 border-t border-gray-100 shrink-0">
         <button
           onClick={onSave}
           disabled={saving || !canSave}
