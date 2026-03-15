@@ -171,7 +171,12 @@ def import_database():
             def read_csv_from_zip(filename):
                 if filename in file_names:
                     with zf.open(filename) as f:
-                        return pd.read_csv(f)
+                        try:
+                            return pd.read_csv(f)
+                        except Exception as e:
+                            # Catching any pandas error (EmptyDataError, ParserError, etc.)
+                            print(f"Skipping {filename} due to read error: {e}")
+                            return None
                 return None
 
             cat_id_map = {}
@@ -184,7 +189,7 @@ def import_database():
                 existing_cats = {c.name.strip().lower(): c for c in Category.query.all()}
                 for _, row in df_cat.iterrows():
                     old_id = row.get("id")
-                    name = str(row["name"]).strip()
+                    name = str(row.get("name", "")).strip()
                     if not name or name.lower() == 'nan': continue
                     if name.lower() in existing_cats:
                         cat_id_map[old_id] = existing_cats[name.lower()].id
@@ -202,7 +207,7 @@ def import_database():
             if df_sen is not None and not df_sen.empty:
                 existing_sens = {s.name.strip().lower() for s in Sensitivity.query.all()}
                 for _, row in df_sen.iterrows():
-                    name = str(row["name"]).strip()
+                    name = str(row.get("name", "")).strip()
                     if not name or name.lower() == 'nan': continue
                     if name.lower() not in existing_sens:
                         db.session.add(Sensitivity(name=name))
@@ -216,7 +221,7 @@ def import_database():
                 existing_tex = {t.name.strip().lower(): t for t in Texture.query.all()}
                 for _, row in df_tex.iterrows():
                     old_id = row.get("id")
-                    name = str(row["name"]).strip()
+                    name = str(row.get("name", "")).strip()
                     if not name or name.lower() == 'nan': continue
                     if name.lower() in existing_tex:
                         tex_id_map[old_id] = existing_tex[name.lower()].id
@@ -234,7 +239,7 @@ def import_database():
             if df_diet is not None and not df_diet.empty:
                 existing_diets = {d.name.strip().lower() for d in Diet.query.all()}
                 for _, row in df_diet.iterrows():
-                    name = str(row["name"]).strip()
+                    name = str(row.get("name", "")).strip()
                     if not name or name.lower() == 'nan': continue
                     if name.lower() not in existing_diets:
                         db.session.add(Diet(name=name))
