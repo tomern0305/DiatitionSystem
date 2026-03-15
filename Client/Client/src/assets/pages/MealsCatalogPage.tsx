@@ -655,7 +655,6 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({
                   }
                   onToggleMayContain={() => setLibShowMayContain((v) => !v)}
                   onAddProduct={(p) => setEditProducts((prev) => [...prev, p])}
-                  fillHeight
                 />
               </div>
             </div>
