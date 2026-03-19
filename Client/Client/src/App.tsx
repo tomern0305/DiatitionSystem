@@ -9,6 +9,8 @@ import LineWorkerProductsPage from "./assets/pages/LineWorkerProductsPage.tsx";
 import CreateMealPage from "./assets/pages/CreateMealPage";
 import MealsCatalogPage from "./assets/pages/MealsCatalogPage";
 import LoginPage from "./assets/pages/LoginPage";
+import ChangePasswordPage from "./assets/pages/ChangePasswordPage";
+import AdminPage from "./assets/pages/AdminPage";
 
 const App = () => {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
@@ -49,6 +51,8 @@ const App = () => {
             element={<MealsCatalogPage setIsSideMenuOpen={setIsSideMenuOpen} />}
           />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/change-password" element={<ChangePasswordPage />} />
+          <Route path="/admin" element={<AdminPage setIsSideMenuOpen={setIsSideMenuOpen} />} />
         </Routes>
       </main>
     </>
