@@ -8,7 +8,7 @@ interface SideMenuProps {
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "מנהל/ת",
-  dietitian: "דיאטן/ת",
+  dietitian: "דיאטן/ית",
   lineworker: "עובד/ת קו",
 };
 
