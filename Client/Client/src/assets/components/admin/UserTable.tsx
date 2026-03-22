@@ -3,7 +3,7 @@ import RoleSelect from "./RoleSelect";
 export interface UserData {
   id: number;
   username: string;
-  fullName: string;
+  fullName?: string;
   role: string;
 }
 
@@ -37,7 +37,7 @@ const UserTable = ({ users, onResetPassword, onRoleChange, onDelete }: UserTable
           ) : (
             users.map((user) => (
               <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                <td className="p-4 font-medium text-gray-800">{user.fullName}</td>
+                <td className="p-4 font-medium text-gray-800">{user.fullName ?? user.username}</td>
                 <td className="p-4 text-gray-500">{user.username}</td>
                 <td className="p-4">
                   <RoleSelect

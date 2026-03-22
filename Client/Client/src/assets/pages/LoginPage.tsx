@@ -1,14 +1,48 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PasswordInput from "../components/login/PasswordInput";
+import { useAuth } from "../../context/AuthContext";
 
-// Login page — username + password with toggle, front-end only for now
+const API = import.meta.env.VITE_API_URL;
+
+// Role-based redirect after successful login
+const roleHome = (role: string) => {
+  if (role === "admin") return "/admin";
+  if (role === "lineworker") return "/lineworker";
+  return "/";
+};
+
 const LoginPage = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    // TODO: wire up authentication
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "שגיאה בכניסה");
+        return;
+      }
+      login(data.user, data.token);
+      // If must_change_password, redirect to change-password; else to role home
+      navigate(data.user.must_change_password ? "/change-password" : roleHome(data.user.role), { replace: true });
+    } catch {
+      setError("שגיאת חיבור לשרת");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,12 +81,15 @@ const LoginPage = () => {
             />
           </div>
 
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
           {/* Submit */}
           <button
             type="submit"
-            className="mt-2 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors cursor-pointer"
+            disabled={loading}
+            className="mt-2 w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors cursor-pointer"
           >
-            כניסה
+            {loading ? "מתחבר..." : "כניסה"}
           </button>
 
         </form>

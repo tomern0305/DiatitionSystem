@@ -90,6 +90,19 @@ class FoodItem(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class User(db.Model):
+    """System user with role-based access (admin, dietitian, lineworker)."""
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    password_hash = db.Column(db.String(200), nullable=False)
+    # Role: 'admin' | 'dietitian' | 'lineworker'
+    role = db.Column(db.String(50), nullable=False, default='lineworker')
+    must_change_password = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class Meal(db.Model):
     """Represents a composed meal built from food items, including its nutritional summary and the filter state used at creation."""
     __tablename__ = 'meals'

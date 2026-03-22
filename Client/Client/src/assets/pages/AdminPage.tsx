@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TopBar from "../components/ui/TopBar";
 import UserTable from "../components/admin/UserTable";
 import type { UserData } from "../components/admin/UserTable";
 import ResetPasswordModal from "../components/admin/ResetPasswordModal";
 import AddUserModal from "../components/admin/AddUserModal";
+import { useAuth } from "../../context/AuthContext";
+
+const API = import.meta.env.VITE_API_URL;
 
 interface AdminPageProps {
   setIsSideMenuOpen?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -14,43 +17,70 @@ const generateTempPassword = () =>
   Math.random().toString(36).slice(2, 6).toUpperCase() +
   Math.random().toString(36).slice(2, 6);
 
-const MOCK_USERS: UserData[] = [
-  { id: 1, username: "admin1", fullName: "יוסי כהן", role: "admin" },
-  { id: 2, username: "diet_sara", fullName: "שרה לוי", role: "dietitian" },
-  { id: 3, username: "diet_ron", fullName: "רון אברהם", role: "dietitian" },
-  { id: 4, username: "line_worker1", fullName: "מיכל גולן", role: "lineworker" },
-  { id: 5, username: "line_worker2", fullName: "אבי שפירא", role: "lineworker" },
-];
-
 const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
-  const [users, setUsers] = useState<UserData[]>(MOCK_USERS);
+  const { token } = useAuth();
+  const [users, setUsers] = useState<UserData[]>([]);
   const [resetTarget, setResetTarget] = useState<{ user: UserData; tempPassword: string } | null>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [error, setError] = useState("");
 
-  // Replace user's role in state
-  const handleRoleChange = (userId: number, newRole: string) => {
-    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role: newRole } : u));
+  const authHeaders = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
   };
 
-  // Generate temp password and open modal
-  const handleResetPassword = (user: UserData) => {
-    setResetTarget({ user, tempPassword: generateTempPassword() });
+  // Load users from API on mount
+  useEffect(() => {
+    fetch(`${API}/api/users`, { headers: authHeaders })
+      .then((r) => r.json())
+      .then((data) => setUsers(Array.isArray(data) ? data : []))
+      .catch(() => setError("שגיאה בטעינת המשתמשים"));
+  }, []);
+
+  const handleRoleChange = async (userId: number, newRole: string) => {
+    const res = await fetch(`${API}/api/users/${userId}/role`, {
+      method: "PATCH",
+      headers: authHeaders,
+      body: JSON.stringify({ role: newRole }),
+    });
+    if (res.ok) {
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role: newRole } : u));
+    }
   };
 
-  // Remove user from state
-  const handleDelete = (userId: number) => {
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
+  // Generate temp password, call API, then open modal to display it
+  const handleResetPassword = async (user: UserData) => {
+    const tempPassword = generateTempPassword();
+    const res = await fetch(`${API}/api/users/${user.id}/reset-password`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({ tempPassword }),
+    });
+    if (res.ok) {
+      setResetTarget({ user, tempPassword });
+    }
   };
 
-  // Add new user with generated password
-  const handleAddUser = (username: string) => {
-    const newUser: UserData = {
-      id: Date.now(),
-      username,
-      fullName: username,
-      role: "lineworker",
-    };
-    setUsers((prev) => [...prev, newUser]);
+  const handleDelete = async (userId: number) => {
+    const res = await fetch(`${API}/api/users/${userId}`, {
+      method: "DELETE",
+      headers: authHeaders,
+    });
+    if (res.ok) {
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+    }
+  };
+
+  const handleAddUser = async (username: string, tempPassword: string) => {
+    const res = await fetch(`${API}/api/users`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({ username, tempPassword, role: "lineworker" }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setUsers((prev) => [...prev, { id: data.id, username: data.username, role: data.role }]);
+    }
   };
 
   return (
@@ -67,6 +97,8 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
             הוסף עובד
           </button>
         </TopBar>
+
+        {error && <p className="text-red-500 text-center">{error}</p>}
 
         <UserTable
           users={users}

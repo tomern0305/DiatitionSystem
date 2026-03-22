@@ -1,8 +1,8 @@
 // Inline role selector for the users table
 const ROLES = [
-  { value: "admin", label: "מנהל" },
-  { value: "dietitian", label: "דיאטן" },
-  { value: "lineworker", label: "עובד קו" },
+  { value: "admin", label: "מנהל/ת" },
+  { value: "dietitian", label: "דיאטן/ת" },
+  { value: "lineworker", label: "עובד/ת קו" },
 ];
 
 interface RoleSelectProps {

@@ -1,15 +1,60 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PasswordInput from "../components/login/PasswordInput";
+import { useAuth } from "../../context/AuthContext";
 
-// Change password page — front-end only, functionality wired up later
+const API = import.meta.env.VITE_API_URL;
+
+const roleHome = (role: string) => {
+  if (role === "admin") return "/admin";
+  if (role === "lineworker") return "/lineworker";
+  return "/";
+};
+
 const ChangePasswordPage = () => {
+  const { token, updateUser } = useAuth();
+  const navigate = useNavigate();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    // TODO: wire up change password logic
+    setError("");
+
+    if (newPassword !== confirmPassword) {
+      setError("הסיסמאות החדשות אינן תואמות");
+      return;
+    }
+    if (newPassword.length < 4) {
+      setError("הסיסמה החדשה חייבת להכיל לפחות 4 תווים");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/api/auth/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "שגיאה בעדכון הסיסמה");
+        return;
+      }
+      updateUser(data.user, data.token);
+      navigate(roleHome(data.user.role), { replace: true });
+    } catch {
+      setError("שגיאת חיבור לשרת");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,12 +99,15 @@ const ChangePasswordPage = () => {
             />
           </div>
 
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
           {/* Submit */}
           <button
             type="submit"
-            className="mt-2 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors cursor-pointer"
+            disabled={loading}
+            className="mt-2 w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors cursor-pointer"
           >
-            עדכן סיסמה
+            {loading ? "מעדכן..." : "עדכן סיסמה"}
           </button>
 
         </form>

@@ -9,3 +9,5 @@ pgvector
 supabase
 pandas
 requests
+PyJWT
+bcrypt

@@ -1,6 +1,7 @@
 """Main Flask application API routing and server initializations."""
 
 import os
+import bcrypt
 from flask import Flask
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -18,6 +19,8 @@ from routes.sensitivities import sensitivities_bp
 from routes.textures import textures_bp
 from routes.diets import diets_bp
 from routes.system import system_bp
+from routes.auth import auth_bp
+from routes.users import users_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -41,15 +44,30 @@ app.register_blueprint(sensitivities_bp)
 app.register_blueprint(textures_bp)
 app.register_blueprint(diets_bp)
 app.register_blueprint(system_bp)
+app.register_blueprint(auth_bp)
+app.register_blueprint(users_bp)
 
 # Create the tables when the server starts
 with app.app_context():
     # First, ensure the pgvector extension is activated in the database
     db.session.execute(text('CREATE EXTENSION IF NOT EXISTS vector'))
     db.session.commit()
-    # Then, create the food_items table based on your models.py
+    # Then, create all tables based on models.py
     db.create_all()
     print("Database tables created successfully!")
+
+    # Seed a default admin user if the users table is empty
+    from models import User
+    if User.query.count() == 0:
+        admin = User(
+            username='admin',
+            password_hash=bcrypt.hashpw(b'admin', bcrypt.gensalt()).decode(),
+            role='admin',
+            must_change_password=True,
+        )
+        db.session.add(admin)
+        db.session.commit()
+        print("Default admin user created (username: admin, password: admin).")
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
