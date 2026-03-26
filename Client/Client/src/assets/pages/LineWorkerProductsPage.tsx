@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import ProductSmall from "../components/products/ProductSmall";
 import TopBar from "../components/ui/TopBar";
 import Loader from "../components/ui/Loader";
+import SuggestedMealsSection from "../components/meal/SuggestedMealsSection";
 import type {
   ProductData,
   CategoryData,
   RestrictionsData,
   TexturesData,
+  MealData,
 } from "../types";
 
 interface ProductsPageProps {
@@ -28,6 +30,7 @@ const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("default");
+  const [meals, setMeals] = useState<MealData[]>([]);
 
   useEffect(() => {
     Promise.all([
@@ -47,13 +50,17 @@ const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
         if (!res.ok) throw new Error("Failed to fetch textures");
         return res.json();
       }),
+      fetch(`${import.meta.env.VITE_API_URL}/api/meals`)
+        .then((res) => (res.ok ? res.json() : []))
+        .catch(() => []),
     ])
       .then(
-        ([productsData, categoriesData, sensitivitiesData, texturesData]) => {
+        ([productsData, categoriesData, sensitivitiesData, texturesData, mealsData]) => {
           setProducts(productsData);
           setCategories(categoriesData);
           setRestrictionsData(sensitivitiesData);
           setTexturesData(texturesData);
+          setMeals(mealsData);
           setLoading(false);
         },
       )
@@ -62,6 +69,24 @@ const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
         setLoading(false);
       });
   }, []);
+
+  // Suggest meals whose restriction_ids exactly match the selected restrictions
+  const suggestedMeals = useMemo(() => {
+    if (selectedRestrictions.length === 0) return [];
+    return meals.filter((meal) => {
+      const mealIds = meal.filters.restriction_ids;
+      const exactMatch =
+        mealIds.length === selectedRestrictions.length &&
+        selectedRestrictions.every((id) => mealIds.includes(id));
+      if (!exactMatch) return false;
+      if (selectedTextures.length > 0) {
+        return selectedTextures.every((id) =>
+          meal.filters.texture_ids.includes(id),
+        );
+      }
+      return true;
+    });
+  }, [meals, selectedRestrictions, selectedTextures]);
 
   if (loading)
     return (
@@ -279,6 +304,14 @@ const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
           </div>
         )}
 
+        {/* Suggested meals based on active restrictions */}
+        <SuggestedMealsSection
+          meals={suggestedMeals}
+          products={products}
+          restrictionsData={restrictionsData}
+          texturesData={texturesData}
+        />
+
         {/* Iterate over defined categories to maintain order */}
         {presentCategories.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
@@ -322,7 +355,7 @@ const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
 
                 {/* Products Grid */}
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 justify-items-center">
-                  {categoryProducts.map((product, index) => {
+                  {categoryProducts.map((product) => {
                     // Determine if the product should be disabled based on filters
                     let isDisabled = false;
                     let isWarning = false;
@@ -384,8 +417,9 @@ const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
                     return (
                       <div
                         key={product.id}
+                        id={`product-${product.id}`}
                         className="w-full flex justify-center animate-fade-in-up"
-                        style={{ animationDelay: `${index * 50}ms` }}
+                        style={{ animationDelay: "0ms" }}
                       >
                         <ProductSmall
                           name={product.name}
@@ -415,6 +449,14 @@ const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
           })
         )}
       </div>
+      <style>{`
+        @keyframes product-blink {
+          0%, 100% { outline: none; }
+          20%, 60% { outline: 3px solid #3b82f6; outline-offset: 3px; border-radius: 12px; }
+          40%, 80% { outline: none; }
+        }
+        .product-highlight { animation: product-blink 0.8s ease-out forwards; }
+      `}</style>
     </div>
   );
 };

@@ -537,6 +537,28 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({
                     </div>
                   </div>
 
+                  {/* Products list */}
+                  {meal.product_ids.length > 0 && (
+                    <div className="mx-5 mb-4 rounded-xl border border-gray-100 overflow-hidden">
+                      {meal.product_ids.map((pid, idx) => {
+                        const pname = productMap.get(pid)?.name;
+                        return pname ? (
+                          <div
+                            key={pid}
+                            className={`flex items-center gap-2.5 px-3 py-2 ${
+                              idx % 2 === 0 ? "bg-white" : "bg-gray-50/60"
+                            }`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0" />
+                            <span className="text-xs text-gray-700 truncate">
+                              {pname}
+                            </span>
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
+
                   {/* Card footer */}
                   <div className="px-5 py-2.5 border-t border-gray-50 bg-gray-50/50">
                     <span className="text-xs text-gray-400">
