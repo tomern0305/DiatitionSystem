@@ -7,5 +7,5 @@ dist
 coverage
 
 Server/.env
-Client/Client/.env
+Client/.env
 Server/__pycache__/models.cpython-313.pyc
