@@ -1,5 +1,5 @@
 import React from "react";
-import TopBar from "../components/ui/TopBar";
+import TopBar from "../components/layout/TopBar";
 import CategoriesTableSection from "../components/settings/CategoriesTableSection";
 import SensitivitiesTableSection from "../components/settings/SensitivitiesTableSection";
 import TexturesTableSection from "../components/settings/TexturesTableSection";

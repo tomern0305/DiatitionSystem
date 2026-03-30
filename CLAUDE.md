@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-### Frontend (Client/Client/)
+### Frontend (Client/)
 ```bash
 npm run dev       # Start Vite dev server with HMR
 npm run build     # Type-check + build production bundle (tsc -b && vite build)
@@ -37,10 +37,11 @@ docker exec -t dietitian_db pg_dump -U admin -d hospital_system > hospital_backu
 
 Three-tier system: React SPA → Flask REST API → PostgreSQL (with pgvector).
 
-### Frontend (`Client/Client/src/`)
+### Frontend (`Client/src/`)
 - **TypeScript + Tailwind CSS + React Router v6**
 - **App.tsx** is the root — defines all `<Route>` entries; `SideMenu` is rendered globally
-- Pages live in `assets/pages/`, reusable components in `assets/components/` (sub-folders: `ui/`, `products/`, `settings/`, `meal/`, `login/`)
+- Pages live in `pages/`, reusable components in `components/` (sub-folders: `layout/`, `products/`, `settings/`, `meal/`, `login/`, `admin/`)
+- Shared types live in `types.ts`; auth context in `context/AuthContext.tsx`
 - API base URL set via `VITE_API_URL` env variable; called as `` `${import.meta.env.VITE_API_URL}/api/...` ``
 
 **Routes:**
@@ -58,6 +59,7 @@ Three-tier system: React SPA → Flask REST API → PostgreSQL (with pgvector).
 - **app.py** — Flask entry point; registers Blueprints and enables CORS
 - **models.py** — SQLAlchemy models: `FoodItem`, `Meal`, `Category`, `Texture`, `Sensitivity`, `Diet`
 - **routes/** — One Blueprint module per resource: `products`, `meals`, `categories`, `sensitivities`, `textures`, `diets`, `system`
+- **scripts/** — Utility scripts: `seed.py` (seed data), `alter_db.py` (schema changes)
 - Database migrations run via `GET /api/run-migrations`
 - Images are stored in **Supabase** cloud storage; `image_url` in `FoodItem` points there
 - `FoodItem` has `nutrition_vector` (6D) and `openai_embedding` (1536D pgvector columns) for AI/ML features

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import TopBar from "../components/ui/TopBar";
+import TopBar from "../components/layout/TopBar";
 import UserTable from "../components/admin/UserTable";
 import type { UserData } from "../components/admin/UserTable";
 import ResetPasswordModal from "../components/admin/ResetPasswordModal";
 import AddUserModal from "../components/admin/AddUserModal";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 const API = import.meta.env.VITE_API_URL;
 

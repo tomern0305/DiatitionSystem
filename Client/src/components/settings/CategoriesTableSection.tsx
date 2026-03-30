@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import AddCategoryForm from "./AddCategoryForm";
 import CategoryRow from "./CategoryRow";
-import Toast from "../ui/Toast";
-import type { ToastType } from "../ui/Toast";
+import Toast from "../layout/Toast";
+import type { ToastType } from "../layout/Toast";
 import type { CategoryData } from "../../types";
 
 const CategoriesTableSection = () => {

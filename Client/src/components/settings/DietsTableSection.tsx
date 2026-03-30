@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import AddDietForm from "./AddDietForm";
 import DietRow from "./DietRow";
-import Toast from "../ui/Toast";
-import type { ToastType } from "../ui/Toast";
+import Toast from "../layout/Toast";
+import type { ToastType } from "../layout/Toast";
 import type { DietData } from "../../types";
 
 const DietsTableSection = () => {

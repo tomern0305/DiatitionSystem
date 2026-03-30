@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import AddProductForm from "../components/settings/AddProductForm";
-import TopBar from "../components/ui/TopBar";
+import TopBar from "../components/layout/TopBar";
 import ProductRow from "../components/settings/ProductRow";
-import Loader from "../components/ui/Loader";
-import Toast from "../components/ui/Toast";
+import Loader from "../components/layout/Loader";
+import Toast from "../components/layout/Toast";
 import type { ProductData, CategoryData } from "../types";
 
 interface ProductSettingsPageProps {
