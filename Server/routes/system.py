@@ -11,6 +11,7 @@ from sqlalchemy import text
 from supabase import create_client, Client
 
 from models import db, FoodItem, Category, Sensitivity, Texture, Diet
+from routes.products import build_product_embedding_pipeline
 
 system_bp = Blueprint('system_bp', __name__)
 
@@ -98,6 +99,24 @@ def export_database():
             
             # 5. FoodItems
             products = FoodItem.query.all()
+
+            # Backfill missing openai_embedding before export so the backup has no nulls
+            needs_commit = False
+            for p in products:
+                if p.openai_embedding is None or all(v == 0.0 for v in p.openai_embedding):
+                    data = {
+                        "name": p.name, "company": p.company, "iddsi": p.iddsi,
+                        "calories": p.calories, "protein": p.protein, "carbs": p.carbs,
+                        "fat": p.fat, "sugares": p.sugars, "sodium": p.sodium,
+                        "contains": p.contains, "mayContain": p.may_contain,
+                        "properties": p.properties, "textureNotes": p.texture_notes,
+                        "allergyNotes": p.allergy_notes, "forbiddenFor": p.forbidden_for,
+                    }
+                    p.openai_embedding = build_product_embedding_pipeline(data)
+                    needs_commit = True
+            if needs_commit:
+                db.session.commit()
+
             prod_data = []
 
             for p in products:
@@ -134,7 +153,9 @@ def export_database():
                     "company": p.company,
                     "texture_notes": p.texture_notes,
                     "allergy_notes": p.allergy_notes,
-                    "forbidden_for": p.forbidden_for
+                    "forbidden_for": p.forbidden_for,
+                    "nutrition_vector": json.dumps([float(v) for v in p.nutrition_vector]) if p.nutrition_vector is not None else "",
+                    "openai_embedding": json.dumps([float(v) for v in p.openai_embedding]) if p.openai_embedding is not None else "",
                 })
             df_prod = pd.DataFrame(prod_data)
             zf.writestr('products.csv', df_prod.to_csv(index=False).encode('utf-8-sig'))
@@ -295,6 +316,12 @@ def import_database():
                         try: return json.loads(val)
                         except: return []
 
+                    def parse_vector_col(val):
+                        # Deserialize a JSON-encoded vector string back to a float list
+                        if pd.isna(val) or str(val).strip() == "": return None
+                        try: return json.loads(val)
+                        except: return None
+
                     new_prod = FoodItem(
                         name=name,
                         category_id=new_cat_id,
@@ -314,6 +341,8 @@ def import_database():
                         texture_notes=row.get("texture_notes", "") if pd.notna(row.get("texture_notes")) else "",
                         allergy_notes=row.get("allergy_notes", "") if pd.notna(row.get("allergy_notes")) else "",
                         forbidden_for=row.get("forbidden_for", "") if pd.notna(row.get("forbidden_for")) else "",
+                        nutrition_vector=parse_vector_col(row.get("nutrition_vector")),
+                        openai_embedding=parse_vector_col(row.get("openai_embedding")),
                     )
                     db.session.add(new_prod)
                     existing_prods_names.add(name.lower())
