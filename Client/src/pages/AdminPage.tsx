@@ -18,29 +18,24 @@ const generateTempPassword = () =>
   Math.random().toString(36).slice(2, 6);
 
 const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
-  const { token } = useAuth();
+  const { token, authFetch } = useAuth();
   const [users, setUsers] = useState<UserData[]>([]);
   const [resetTarget, setResetTarget] = useState<{ user: UserData; tempPassword: string } | null>(null);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [error, setError] = useState("");
 
-  const authHeaders = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-
-  // Load users from API on mount
+  // Load users once token is available; re-runs if token changes
   useEffect(() => {
-    fetch(`${API}/api/users`, { headers: authHeaders })
+    if (!token) return;
+    authFetch(`${API}/api/users`)
       .then((r) => r.json())
       .then((data) => setUsers(Array.isArray(data) ? data : []))
       .catch(() => setError("שגיאה בטעינת המשתמשים"));
-  }, []);
+  }, [token]);
 
   const handleRoleChange = async (userId: number, newRole: string) => {
-    const res = await fetch(`${API}/api/users/${userId}/role`, {
+    const res = await authFetch(`${API}/api/users/${userId}/role`, {
       method: "PATCH",
-      headers: authHeaders,
       body: JSON.stringify({ role: newRole }),
     });
     if (res.ok) {
@@ -51,9 +46,8 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
   // Generate temp password, call API, then open modal to display it
   const handleResetPassword = async (user: UserData) => {
     const tempPassword = generateTempPassword();
-    const res = await fetch(`${API}/api/users/${user.id}/reset-password`, {
+    const res = await authFetch(`${API}/api/users/${user.id}/reset-password`, {
       method: "POST",
-      headers: authHeaders,
       body: JSON.stringify({ tempPassword }),
     });
     if (res.ok) {
@@ -62,9 +56,8 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
   };
 
   const handleDelete = async (userId: number) => {
-    const res = await fetch(`${API}/api/users/${userId}`, {
+    const res = await authFetch(`${API}/api/users/${userId}`, {
       method: "DELETE",
-      headers: authHeaders,
     });
     if (res.ok) {
       setUsers((prev) => prev.filter((u) => u.id !== userId));
@@ -72,9 +65,8 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
   };
 
   const handleAddUser = async (username: string, tempPassword: string) => {
-    const res = await fetch(`${API}/api/users`, {
+    const res = await authFetch(`${API}/api/users`, {
       method: "POST",
-      headers: authHeaders,
       body: JSON.stringify({ username, tempPassword, role: "lineworker" }),
     });
     const data = await res.json();
