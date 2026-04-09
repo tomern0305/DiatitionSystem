@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import AddTextureForm from "./AddTextureForm";
 import TextureRow from "./TextureRow";
-import Toast from "../ui/Toast";
-import type { ToastType } from "../ui/Toast";
+import Toast from "../layout/Toast";
+import type { ToastType } from "../layout/Toast";
 import type { TextureData } from "../../types";
 
 const TexturesTableSection = () => {

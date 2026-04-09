@@ -14,6 +14,7 @@ interface AuthContextType {
   login: (user: AuthUser, token: string) => void;
   logout: () => void;
   updateUser: (user: AuthUser, token: string) => void;
+  authFetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -45,8 +46,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("auth_token");
   };
 
+  // Wraps fetch with the auth header; auto-logouts on 401 (expired token)
+  const authFetch = async (input: RequestInfo, init: RequestInit = {}): Promise<Response> => {
+    const res = await fetch(input, {
+      ...init,
+      headers: { "Content-Type": "application/json", ...init.headers, Authorization: `Bearer ${token}` },
+    });
+    if (res.status === 401) logout();
+    return res;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, authFetch }}>
       {children}
     </AuthContext.Provider>
   );

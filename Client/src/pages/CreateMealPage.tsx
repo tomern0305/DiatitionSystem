@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
-import TopBar from "../components/ui/TopBar";
-import Loader from "../components/ui/Loader";
-import Toast from "../components/ui/Toast";
-import type { ToastType } from "../components/ui/Toast";
+import TopBar from "../components/layout/TopBar";
+import Loader from "../components/layout/Loader";
+import Toast from "../components/layout/Toast";
+import type { ToastType } from "../components/layout/Toast";
 import ProductLibrary from "../components/meal/ProductLibrary";
 import MealNutritionSummary from "../components/meal/MealNutritionSummary";
 import MealDetailsForm from "../components/meal/MealDetailsForm";

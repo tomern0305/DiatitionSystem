@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
-import TopBar from "../components/ui/TopBar";
-import Loader from "../components/ui/Loader";
-import Toast from "../components/ui/Toast";
+import TopBar from "../components/layout/TopBar";
+import Loader from "../components/layout/Loader";
+import Toast from "../components/layout/Toast";
 import MealDetailsForm from "../components/meal/MealDetailsForm";
 import MealNutritionSummary from "../components/meal/MealNutritionSummary";
 import MealIngredientsList from "../components/meal/MealIngredientsList";
@@ -14,7 +14,7 @@ import type {
   TexturesData,
 } from "../types";
 import type { AnnotatedProduct } from "../components/meal/ProductLibrary";
-import type { ToastType } from "../components/ui/Toast";
+import type { ToastType } from "../components/layout/Toast";
 
 interface MealsCatalogPageProps {
   /** Controls the sidebar open/close state from the parent layout. */

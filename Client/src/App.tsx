@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
-import SideMenu from "./assets/components/ui/SideMenu";
-import ProtectedRoute from "./assets/components/ui/ProtectedRoute";
-import ProductsPage from "./assets/pages/ProductsPage";
-import ProductSettingsPage from "./assets/pages/ProductSettingsPage";
-import CategorySettingsPage from "./assets/pages/CategorySettingsPage";
-import LineWorkerProductsPage from "./assets/pages/LineWorkerProductsPage.tsx";
-import CreateMealPage from "./assets/pages/CreateMealPage";
-import MealsCatalogPage from "./assets/pages/MealsCatalogPage";
-import LoginPage from "./assets/pages/LoginPage";
-import ChangePasswordPage from "./assets/pages/ChangePasswordPage";
-import AdminPage from "./assets/pages/AdminPage";
+import SideMenu from "./components/layout/SideMenu";
+import ProtectedRoute from "./components/layout/ProtectedRoute";
+import ProductsPage from "./pages/ProductsPage";
+import ProductSettingsPage from "./pages/ProductSettingsPage";
+import CategorySettingsPage from "./pages/CategorySettingsPage";
+import LineWorkerProductsPage from "./pages/LineWorkerProductsPage";
+import CreateMealPage from "./pages/CreateMealPage";
+import MealsCatalogPage from "./pages/MealsCatalogPage";
+import LoginPage from "./pages/LoginPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
+import AdminPage from "./pages/AdminPage";
 
 const App = () => {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);

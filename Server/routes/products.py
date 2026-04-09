@@ -5,11 +5,94 @@ from werkzeug.utils import secure_filename
 from models import db, FoodItem
 from supabase import create_client, Client
 
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+api_key = os.environ.get("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key) if api_key else None
+
+
 products_bp = Blueprint('products_bp', __name__)
 
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_ANON_KEY") or os.environ.get("SUPABASE_SERVICE_KEY")
 supabase: Client = create_client(supabase_url, supabase_key)
+
+def get_embedding(text):
+    """Helper function to generate OpenAI embedding for a given text,
+    if there is no key will fill zeroes""" 
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        return [0.0] * 1536
+    try:
+        response = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=text
+        )
+        return response.data[0].embedding
+    except Exception as e:
+        print(f"Embedding failed: {e}")
+        return [0.0] * 1536
+
+def make_semantic_search_text_for_embedding(data: dict) -> str:
+    """
+    Builds a human-readable semantic sentence from product data
+    for use as OpenAI embedding input.
+    """
+    name        = data.get('name', '')
+    company     = data.get('company', '')
+    iddsi       = data.get('iddsi', 0)
+    calories    = data.get('calories', 0.0)
+    protein     = data.get('protein', 0.0)
+    carbs       = data.get('carbs', 0.0)
+    fat         = data.get('fat', 0.0)
+    sugars      = data.get('sugares', 0.0)
+    sodium      = data.get('sodium', 0.0)
+
+    contains    = data.get('contains', [])
+    may_contain = data.get('mayContain', [])
+    properties  = data.get('properties', [])
+
+    texture_notes = data.get('textureNotes', '')
+    allergy_notes = data.get('allergyNotes', '')
+    forbidden_for = data.get('forbiddenFor', '')
+
+    # Format list fields — fall back to readable "none" strings
+    contains_str    = ", ".join(contains)    if contains    else "ללא"
+    may_contain_str = ", ".join(may_contain) if may_contain else "ללא"
+    props_str       = ", ".join(properties)  if properties  else "רגיל"
+
+    parts = [
+        f"שם מוצר: {name}.",
+        f"חברה: {company}." if company else None,
+        f"מרקם IDDSI: {iddsi}.",
+        f"קלוריות: {calories} קק״ל, חלבון: {protein}g, פחמימות: {carbs}g, שומן: {fat}g, סוכר: {sugars}g, נתרן: {sodium}mg.",
+        f"מכיל ודאית: {contains_str}.",
+        f"עלול להכיל: {may_contain_str}.",
+        f"תכונות: {props_str}.",
+        f"הערות מרקם: {texture_notes}."  if texture_notes else None,
+        f"הערות אלרגיה: {allergy_notes}." if allergy_notes else None,
+        f"אסור עבור: {forbidden_for}."    if forbidden_for else None,
+    ]
+
+    return " ".join(p for p in parts if p)
+
+def build_product_embedding_pipeline(data: dict) -> list[float]:
+    """
+    Full pipeline: data dict → semantic sentence → OpenAI embedding vector.
+    """
+    # if there is no flag "AI_ENABLED" it will be false by default, so we won't generate embeddings.
+    ai_enabled = os.environ.get("AI_ENABLED", "false").lower() == "true"
+
+    if not ai_enabled:
+        return [0.0] * 1536
+
+
+    semantic_text = make_semantic_search_text_for_embedding(data)
+    print(f"[Embedding] Semantic text: {semantic_text}")   # helpful during dev
+    embedding = get_embedding(semantic_text)
+    return embedding
 
 @products_bp.route('/api/products', methods=['GET'])
 def get_products():
@@ -101,7 +184,16 @@ def add_product():
         company=data.get('company', ''),
         texture_notes=data.get('textureNotes', ''),
         allergy_notes=data.get('allergyNotes', ''),
-        forbidden_for=data.get('forbiddenFor', '')
+        forbidden_for=data.get('forbiddenFor', ''),
+        nutrition_vector=[
+            data.get('calories', 0.0),
+            data.get('protein', 0.0),
+            data.get('carbs', 0.0),
+            data.get('fat', 0.0),
+            data.get('sugares', 0.0),
+            data.get('sodium', 0.0)
+        ],
+        openai_embedding=build_product_embedding_pipeline(data)
     )
     
     try:

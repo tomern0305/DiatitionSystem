@@ -10,7 +10,7 @@ from models import db, User
 auth_bp = Blueprint('auth', __name__)
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'dev-secret-change-in-production')
-JWT_EXPIRY_HOURS = 8
+JWT_EXPIRY_HOURS = 720
 
 
 def _make_token(user: User) -> str:

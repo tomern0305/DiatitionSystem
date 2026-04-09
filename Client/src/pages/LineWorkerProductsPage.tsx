@@ -1,19 +1,21 @@
-import { useState, useEffect } from "react";
-import ProductBig from "../components/products/ProductBig";
-import TopBar from "../components/ui/TopBar";
-import Loader from "../components/ui/Loader";
+import { useState, useEffect, useMemo } from "react";
+import ProductSmall from "../components/products/ProductSmall";
+import TopBar from "../components/layout/TopBar";
+import Loader from "../components/layout/Loader";
+import SuggestedMealsSection from "../components/meal/SuggestedMealsSection";
 import type {
   ProductData,
   CategoryData,
   RestrictionsData,
   TexturesData,
+  MealData,
 } from "../types";
 
 interface ProductsPageProps {
   setIsSideMenuOpen?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
+const LineWorkerProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
   const [restrictionsData, setRestrictionsData] = useState<RestrictionsData[]>(
     [],
   );
@@ -24,11 +26,11 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
   const [products, setProducts] = useState<ProductData[]>([]);
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [selectedTextures, setSelectedTextures] = useState<number[]>([]);
-  const [showMayContain, setShowMayContain] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("default");
+  const [meals, setMeals] = useState<MealData[]>([]);
 
   useEffect(() => {
     Promise.all([
@@ -48,13 +50,17 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
         if (!res.ok) throw new Error("Failed to fetch textures");
         return res.json();
       }),
+      fetch(`${import.meta.env.VITE_API_URL}/api/meals`)
+        .then((res) => (res.ok ? res.json() : []))
+        .catch(() => []),
     ])
       .then(
-        ([productsData, categoriesData, sensitivitiesData, texturesData]) => {
+        ([productsData, categoriesData, sensitivitiesData, texturesData, mealsData]) => {
           setProducts(productsData);
           setCategories(categoriesData);
           setRestrictionsData(sensitivitiesData);
           setTexturesData(texturesData);
+          setMeals(mealsData);
           setLoading(false);
         },
       )
@@ -63,6 +69,24 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
         setLoading(false);
       });
   }, []);
+
+  // Suggest meals whose restriction_ids exactly match the selected restrictions
+  const suggestedMeals = useMemo(() => {
+    if (selectedRestrictions.length === 0) return [];
+    return meals.filter((meal) => {
+      const mealIds = meal.filters.restriction_ids;
+      const exactMatch =
+        mealIds.length === selectedRestrictions.length &&
+        selectedRestrictions.every((id) => mealIds.includes(id));
+      if (!exactMatch) return false;
+      if (selectedTextures.length > 0) {
+        return selectedTextures.every((id) =>
+          meal.filters.texture_ids.includes(id),
+        );
+      }
+      return true;
+    });
+  }, [meals, selectedRestrictions, selectedTextures]);
 
   if (loading)
     return (
@@ -148,7 +172,10 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
     >
       <div className="w-full mx-auto space-y-16">
         {/* Search, Sort & Header Bar */}
-        <TopBar title="קטלוג מוצרים" setIsSideMenuOpen={setIsSideMenuOpen}>
+        <TopBar
+          title="קטלוג מוצרים - עובד פס"
+          setIsSideMenuOpen={setIsSideMenuOpen}
+        >
           <div className="relative w-full sm:w-64">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -187,43 +214,8 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
         {/* --- Restrictions Filter Bar --- */}
         {restrictionsData.length > 0 && (
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8 flex flex-row flex-wrap gap-x-12 gap-y-8 items-start">
-            {/* May Contain Column */}
-            <div className="flex flex-col gap-3 min-w-[250px] flex-1">
-              <h3 className="text-gray-800 font-bold flex items-center gap-2 m-0 p-0 text-lg">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-5 h-5 text-orange-500"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-                מעורבב / עלול להכיל
-              </h3>
-              <div className="flex flex-wrap gap-2 mt-1">
-                <button
-                  onClick={() => setShowMayContain(!showMayContain)}
-                  className={`
-                    px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border
-                    ${
-                      showMayContain
-                        ? "bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20"
-                        : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
-                    }
-                  `}
-                >
-                  הצג מוצרים שעלולים להכיל
-                </button>
-              </div>
-            </div>
             {/* Sensitivities Column */}
-            <div className="flex flex-col gap-3 min-w-[250px] flex-1 border-r border-gray-100 pr-0 sm:pr-8">
+            <div className="flex flex-col gap-3 min-w-[250px] flex-1  border-gray-100 pr-0 sm:pr-8">
               <h3 className="text-gray-800 font-bold flex items-center gap-2 m-0 p-0 text-lg">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -312,6 +304,14 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
           </div>
         )}
 
+        {/* Suggested meals based on active restrictions */}
+        <SuggestedMealsSection
+          meals={suggestedMeals}
+          products={products}
+          restrictionsData={restrictionsData}
+          texturesData={texturesData}
+        />
+
         {/* Iterate over defined categories to maintain order */}
         {presentCategories.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
@@ -350,12 +350,12 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
                   <h2 className="text-2xl font-bold text-gray-800 shrink-0 whitespace-normal break-words max-w-full">
                     {category}
                   </h2>
-                  <div className="h-px bg-gray-200 flex-grow rounded-full shrink"></div>
+                  <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
                 </div>
 
                 {/* Products Grid */}
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 justify-items-center">
-                  {categoryProducts.map((product, index) => {
+                  {categoryProducts.map((product) => {
                     // Determine if the product should be disabled based on filters
                     let isDisabled = false;
                     let isWarning = false;
@@ -385,13 +385,8 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
                         selectedRestrictionNames.includes(allergen),
                       )
                     ) {
-                      // It fails the restriction due to "may contain".
-                      // If the user explicitly wants to show these, we mark it as "warning", otherwise it is "disabled".
-                      if (showMayContain) {
-                        isWarning = true;
-                      } else {
-                        isDisabled = true;
-                      }
+                      // Line workers don't have a "showMayContain" toggle, so mayContain means it's disabled.
+                      isDisabled = true;
                     }
 
                     // 3. Check Textures: If a texture is selected, the product MUST match it, otherwise it is disabled.
@@ -422,10 +417,11 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
                     return (
                       <div
                         key={product.id}
+                        id={`product-${product.id}`}
                         className="w-full flex justify-center animate-fade-in-up"
-                        style={{ animationDelay: `${index * 50}ms` }}
+                        style={{ animationDelay: "0ms" }}
                       >
-                        <ProductBig
+                        <ProductSmall
                           name={product.name}
                           image={product.image}
                           iddsi={product.iddsi}
@@ -453,8 +449,16 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
           })
         )}
       </div>
+      <style>{`
+        @keyframes product-blink {
+          0%, 100% { outline: none; }
+          20%, 60% { outline: 3px solid #3b82f6; outline-offset: 3px; border-radius: 12px; }
+          40%, 80% { outline: none; }
+        }
+        .product-highlight { animation: product-blink 0.8s ease-out forwards; }
+      `}</style>
     </div>
   );
 };
 
-export default ProductsPage;
+export default LineWorkerProductsPage;
