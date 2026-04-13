@@ -56,7 +56,7 @@
 
 
 ### Import / Export
-- currnetly the import / export only does the products and the params for the products, we plane to include the meals and diets for easy backup
+- currently the import / export only does the products and the params for the products, we plane to include the meals and diets for easy backup
 
 ### AI-Powered Features (Future — Scope TBD)
 - The AI/ML direction is not yet decided. We will first complete all dietitian-requested features and gather feedback before committing to any AI roadmap.
