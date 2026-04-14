@@ -36,11 +36,11 @@
 
 ## Folder Structure & Technology
 
-### `Client/` — Frontend
+### `Client/` - Frontend
 **Technology:** React 18 · TypeScript · Vite · Tailwind CSS · React Router v6
 
 
-### `Server/` — Backend
+### `Server/` - Backend
 **Technology:** Python · Flask · SQLAlchemy · PostgreSQL + pgvector · Docker · Supabase (images)
 
 
