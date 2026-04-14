@@ -1,4 +1,4 @@
-# Dietitian System — Prototype Overview
+# Dietitian System - Prototype Overview
 
 ## What We Have Built So Far
 
@@ -10,7 +10,7 @@
 
 ### Product Management
 - Full CRUD for food products (add, edit, delete)
-- Each product has: name, category, texture, sensitivities (allergens), diets, nutritional values (calories, protein, carbs, fat, fiber, sodium), embedding and a free-form properties field
+- Each product has: name, category, texture, sensitivities (allergens), diets, nutritional values (calories, protein, carbs, fat, fiber, sodium), embedding(hidden) and a free-form properties field
 - Product images uploaded to **Supabase** cloud storage
 - Line Worker view — a simplified read-only product browser
 
@@ -25,11 +25,11 @@
 
 ### AI / Vector Features (Infrastructure Only)
 - Each product stores a **6-dimensional nutrition vector** and a **1536-dimensional OpenAI embedding** (pgvector)
-- Embeddings are generated automatically when a product is added or updated (controlled by `AI_ENABLED` env flag)
+- Embeddings are generated automatically when a product is added or updated (controlled by AI_ENABLED .env flag)
 - **Note:** The AI/ML infrastructure is in place but no AI features are exposed to users yet. The plan is to first complete all dietitian-requested features, and only then decide how and what AI/ML capabilities to add.
 
 ### Import / Export
-- Export the full product database + images as a ZIP file (CSV + `images/` folder)
+- Export the full product database + images as a ZIP file (CSV + `images/` folder) (This part is missing the Meals data and will be added soon)
 - Import from a ZIP to restore or migrate data to another environment
 
 ---
@@ -58,7 +58,7 @@
 ### Import / Export
 - currently the import / export only does the products and the params for the products, we plane to include the meals and diets for easy backup
 
-### AI-Powered Features (Future — Scope TBD)
+### AI-Powered Features (Future - Scope TBD)
 - The AI/ML direction is not yet decided. We will first complete all dietitian-requested features and gather feedback before committing to any AI roadmap.
-- Possible directions include: natural language product search, AI-suggested meals, or patient-profile-based recommendations — but none of these are confirmed or scheduled.
+- Possible directions include: natural language product search, AI-suggested meals, or patient-profile-based recommendations — but none of these are confirmed or scheduled
 
