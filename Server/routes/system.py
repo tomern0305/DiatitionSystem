@@ -6,31 +6,31 @@ import requests
 import json
 import pandas as pd
 from flask import Blueprint, jsonify, send_from_directory, current_app, request, Response
-from werkzeug.utils import secure_filename
 from sqlalchemy import text
 from supabase import create_client, Client
 
-from models import db, FoodItem, Category, Sensitivity, Texture, Diet
+from models import db, FoodItem, Category, Sensitivity, Texture, Diet, Meal
 from routes.products import build_product_embedding_pipeline
+from routes.auth import verify_token
 
 system_bp = Blueprint('system_bp', __name__)
+
 
 @system_bp.route('/api/status', methods=['GET'])
 def status():
     """Simple health check route to verify server status."""
     return jsonify({"status": "Flask is running and connected to PostgreSQL!"})
 
+
 @system_bp.route('/uploads/<filename>')
 def uploaded_file(filename):
     """Serves locally uploaded files (legacy use-case)."""
     return send_from_directory(current_app.config.get('UPLOAD_FOLDER', 'uploads'), filename)
 
+
 @system_bp.route('/api/run-migrations', methods=['GET'])
 def run_migrations():
-    """
-    Run database migrations manually to add missing columns in production
-    without dropping the tables.
-    """
+    """Run database migrations manually to add missing columns in production."""
     try:
         db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS company VARCHAR(100);"))
         db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
@@ -67,297 +67,306 @@ def run_migrations():
         db.session.rollback()
         return jsonify({"error": f"Migration failed: {str(e)}"}), 500
 
-# ================= Backup and Restore (ZIP) =================
+
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
+def _require_admin():
+    """Returns a 403 response tuple when the caller is not an admin, else None."""
+    payload = verify_token(request)
+    if not payload or payload.get('role') != 'admin':
+        return jsonify({"error": "גישה אסורה — נדרשות הרשאות מנהל"}), 403
+    return None
+
+
+def _parse_json_col(val):
+    if pd.isna(val): return []
+    try: return json.loads(val)
+    except: return []
+
+
+def _parse_vector_col(val):
+    if pd.isna(val) or str(val).strip() == "": return None
+    try: return json.loads(val)
+    except: return None
+
+
+# ── Export ─────────────────────────────────────────────────────────────────────
 
 @system_bp.route('/api/system/export', methods=['GET'])
 def export_database():
-    """Exports all entities into CSVs and packages all Supabase images into an 'images' folder inside the ZIP."""
+    """Exports all tables into a single multi-sheet Excel file bundled with images in a ZIP."""
+    if (err := _require_admin()): return err
     try:
-        memory_file = io.BytesIO()
-        
-        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-            
-            # 1. Categories
-            categories = Category.query.all()
-            df_cat = pd.DataFrame([{"id": c.id, "name": c.name} for c in categories])
-            zf.writestr('categories.csv', df_cat.to_csv(index=False).encode('utf-8-sig'))
-            
-            # 2. Sensitivities
-            sensitivities = Sensitivity.query.all()
-            df_sen = pd.DataFrame([{"id": s.id, "name": s.name} for s in sensitivities])
-            zf.writestr('sensitivities.csv', df_sen.to_csv(index=False).encode('utf-8-sig'))
-            
-            # 3. Textures
-            textures = Texture.query.all()
-            df_tex = pd.DataFrame([{"id": t.id, "name": t.name} for t in textures])
-            zf.writestr('textures.csv', df_tex.to_csv(index=False).encode('utf-8-sig'))
-            
-            # 4. Diets
-            diets = Diet.query.all()
-            df_diet = pd.DataFrame([{"id": d.id, "name": d.name} for d in diets])
-            zf.writestr('diets.csv', df_diet.to_csv(index=False).encode('utf-8-sig'))
-            
-            # 5. FoodItems
-            products = FoodItem.query.all()
+        products = FoodItem.query.all()
+        meals    = Meal.query.all()
 
-            # Backfill missing openai_embedding before export so the backup has no nulls
-            needs_commit = False
-            for p in products:
-                if p.openai_embedding is None or all(v == 0.0 for v in p.openai_embedding):
-                    data = {
-                        "name": p.name, "company": p.company, "iddsi": p.iddsi,
-                        "calories": p.calories, "protein": p.protein, "carbs": p.carbs,
-                        "fat": p.fat, "sugares": p.sugars, "sodium": p.sodium,
-                        "contains": p.contains, "mayContain": p.may_contain,
-                        "properties": p.properties, "textureNotes": p.texture_notes,
-                        "allergyNotes": p.allergy_notes, "forbiddenFor": p.forbidden_for,
-                    }
-                    p.openai_embedding = build_product_embedding_pipeline(data)
-                    needs_commit = True
-            if needs_commit:
-                db.session.commit()
+        # Backfill missing OpenAI embeddings before export
+        needs_commit = False
+        for p in products:
+            if p.openai_embedding is None or all(v == 0.0 for v in p.openai_embedding):
+                data = {
+                    "name": p.name, "company": p.company, "iddsi": p.iddsi,
+                    "calories": p.calories, "protein": p.protein, "carbs": p.carbs,
+                    "fat": p.fat, "sugares": p.sugars, "sodium": p.sodium,
+                    "contains": p.contains, "mayContain": p.may_contain,
+                    "properties": p.properties, "textureNotes": p.texture_notes,
+                    "allergyNotes": p.allergy_notes, "forbiddenFor": p.forbidden_for,
+                }
+                p.openai_embedding = build_product_embedding_pipeline(data)
+                needs_commit = True
+        if needs_commit:
+            db.session.commit()
 
-            prod_data = []
+        # ── Build product rows + collect images ────────────────────────────
+        prod_rows, image_downloads = [], []
+        for p in products:
+            local_path = ""
+            if p.image_url and p.image_url.startswith("http"):
+                try:
+                    resp = requests.get(p.image_url, stream=True, timeout=5)
+                    if resp.status_code == 200:
+                        ext = p.image_url.split('.')[-1]
+                        if len(ext) > 4 or '?' in ext: ext = 'jpg'
+                        local_path = f"images/{p.id}_{uuid.uuid4().hex[:6]}.{ext}"
+                        image_downloads.append((local_path, resp.content))
+                except Exception as e:
+                    print(f"Image fetch failed: {p.image_url} -> {e}")
 
-            for p in products:
-                # Handle Image download into ZIP
-                local_image_path = ""
-                if p.image_url and p.image_url.startswith("http"):
-                    try:
-                        resp = requests.get(p.image_url, stream=True, timeout=5)
-                        if resp.status_code == 200:
-                            ext = p.image_url.split('.')[-1]
-                            if len(ext) > 4 or '?' in ext: ext = 'jpg'
-                            local_image_path = f"images/{p.id}_{uuid.uuid4().hex[:6]}.{ext}"
-                            # Write raw image bytes directly into the zip file
-                            zf.writestr(local_image_path, resp.content)
-                    except Exception as e:
-                        print(f"Failed to fetch image for export: {p.image_url} -> {e}")
+            prod_rows.append({
+                "id": p.id, "name": p.name, "category_id": p.category_id,
+                "image_url": local_path or p.image_url or "",
+                "iddsi": p.iddsi, "calories": p.calories, "protein": p.protein,
+                "carbs": p.carbs, "fat": p.fat, "sugars": p.sugars, "sodium": p.sodium,
+                "contains": json.dumps(p.contains or [], ensure_ascii=False),
+                "may_contain": json.dumps(p.may_contain or [], ensure_ascii=False),
+                "texture_id": p.texture_id,
+                "properties": json.dumps(p.properties or [], ensure_ascii=False),
+                "company": p.company or "", "texture_notes": p.texture_notes or "",
+                "allergy_notes": p.allergy_notes or "", "forbidden_for": p.forbidden_for or "",
+                "nutrition_vector": json.dumps([float(v) for v in p.nutrition_vector]) if p.nutrition_vector is not None else "",
+                "openai_embedding": json.dumps([float(v) for v in p.openai_embedding]) if p.openai_embedding is not None else "",
+            })
 
-                prod_data.append({
-                    "id": p.id,
-                    "name": p.name,
-                    "category_id": p.category_id,
-                    "image_url": local_image_path if local_image_path else p.image_url,
-                    "iddsi": p.iddsi,
-                    "calories": p.calories,
-                    "protein": p.protein,
-                    "carbs": p.carbs,
-                    "fat": p.fat,
-                    "sugars": p.sugars,
-                    "sodium": p.sodium,
-                    "contains": json.dumps(p.contains, ensure_ascii=False) if p.contains else "[]",
-                    "may_contain": json.dumps(p.may_contain, ensure_ascii=False) if p.may_contain else "[]",
-                    "texture_id": p.texture_id,
-                    "properties": json.dumps(p.properties, ensure_ascii=False) if p.properties else "[]",
-                    "company": p.company,
-                    "texture_notes": p.texture_notes,
-                    "allergy_notes": p.allergy_notes,
-                    "forbidden_for": p.forbidden_for,
-                    "nutrition_vector": json.dumps([float(v) for v in p.nutrition_vector]) if p.nutrition_vector is not None else "",
-                    "openai_embedding": json.dumps([float(v) for v in p.openai_embedding]) if p.openai_embedding is not None else "",
-                })
-            df_prod = pd.DataFrame(prod_data)
-            zf.writestr('products.csv', df_prod.to_csv(index=False).encode('utf-8-sig'))
+        meal_rows = [{
+            "id": m.id, "name": m.name, "description": m.description or "",
+            "diet_id": m.diet_id,
+            "product_ids": json.dumps(m.product_ids or [], ensure_ascii=False),
+            "total_calories": m.total_calories, "total_protein": m.total_protein,
+            "total_carbs": m.total_carbs, "total_fat": m.total_fat,
+            "total_sugars": m.total_sugars, "total_sodium": m.total_sodium,
+            "filter_restriction_ids": json.dumps(m.filter_restriction_ids or [], ensure_ascii=False),
+            "filter_texture_ids": json.dumps(m.filter_texture_ids or [], ensure_ascii=False),
+            "filter_show_may_contain": m.filter_show_may_contain,
+        } for m in meals]
 
-        memory_file.seek(0)
-        
+        # ── Write all sheets into one xlsx ─────────────────────────────────
+        xlsx_buf = io.BytesIO()
+        with pd.ExcelWriter(xlsx_buf, engine='openpyxl') as writer:
+            pd.DataFrame([{"id": c.id, "name": c.name} for c in Category.query.all()]).to_excel(writer, sheet_name='Categories', index=False)
+            pd.DataFrame([{"id": s.id, "name": s.name} for s in Sensitivity.query.all()]).to_excel(writer, sheet_name='Sensitivities', index=False)
+            pd.DataFrame([{"id": t.id, "name": t.name} for t in Texture.query.all()]).to_excel(writer, sheet_name='Textures', index=False)
+            pd.DataFrame([{"id": d.id, "name": d.name} for d in Diet.query.all()]).to_excel(writer, sheet_name='Diets', index=False)
+            pd.DataFrame(prod_rows).to_excel(writer, sheet_name='Products', index=False)
+            pd.DataFrame(meal_rows).to_excel(writer, sheet_name='Meals', index=False)
+        xlsx_buf.seek(0)
+
+        # ── Bundle xlsx + images into a ZIP ────────────────────────────────
+        zip_buf = io.BytesIO()
+        with zipfile.ZipFile(zip_buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr('backup.xlsx', xlsx_buf.read())
+            for path, data in image_downloads:
+                zf.writestr(path, data)
+        zip_buf.seek(0)
+
         return Response(
-            memory_file,
+            zip_buf,
             mimetype="application/zip",
             headers={"Content-Disposition": "attachment;filename=database_backup.zip"}
         )
     except Exception as e:
         return jsonify({"error": f"Export failed: {str(e)}"}), 500
 
+
+# ── Import ─────────────────────────────────────────────────────────────────────
+
 @system_bp.route('/api/system/import', methods=['POST'])
 def import_database():
-    """Imports CSV data and pushes bundled images directly from the ZIP into Supabase."""
+    """Imports from a backup ZIP containing backup.xlsx and an images/ folder."""
+    if (err := _require_admin()): return err
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
     file = request.files['file']
-    if file.filename == '':
+    if not file.filename:
         return jsonify({"error": "No selected file"}), 400
-        
+
     try:
         supabase_url = os.environ.get("SUPABASE_URL", "")
         supabase_key = os.environ.get("SUPABASE_ANON_KEY") or os.environ.get("SUPABASE_SERVICE_KEY")
         supabase: Client = None
         if supabase_url and supabase_key:
             supabase = create_client(supabase_url, supabase_key)
-            
-        with zipfile.ZipFile(file, 'r') as zf:
-            file_names = zf.namelist()
-            
-            def read_csv_from_zip(filename):
-                if filename in file_names:
-                    with zf.open(filename) as f:
-                        try:
-                            return pd.read_csv(f)
-                        except Exception as e:
-                            # Catching any pandas error (EmptyDataError, ParserError, etc.)
-                            print(f"Skipping {filename} due to read error: {e}")
-                            return None
-                return None
 
-            cat_id_map = {}
-            tex_id_map = {}
-            
-            # --- 1. Categories ---
-            df_cat = read_csv_from_zip('categories.csv')
+        with zipfile.ZipFile(file, 'r') as zf:
+            zip_names = zf.namelist()
+            sheets = pd.read_excel(io.BytesIO(zf.read('backup.xlsx')), sheet_name=None)
+
+            def get_sheet(name):
+                df = sheets.get(name)
+                return df if df is not None and not df.empty else None
+
+            cat_id_map, tex_id_map, diet_id_map = {}, {}, {}
+
+            # ── 1. Categories ──────────────────────────────────────────────
             cat_added = 0
-            if df_cat is not None and not df_cat.empty:
-                existing_cats = {c.name.strip().lower(): c for c in Category.query.all()}
-                for _, row in df_cat.iterrows():
-                    old_id = row.get("id")
+            if (df := get_sheet('Categories')) is not None:
+                existing = {c.name.strip().lower(): c for c in Category.query.all()}
+                for _, row in df.iterrows():
                     name = str(row.get("name", "")).strip()
                     if not name or name.lower() == 'nan': continue
-                    if name.lower() in existing_cats:
-                        cat_id_map[old_id] = existing_cats[name.lower()].id
+                    if name.lower() in existing:
+                        cat_id_map[row.get("id")] = existing[name.lower()].id
                     else:
-                        new_cat = Category(name=name)
-                        db.session.add(new_cat)
-                        db.session.flush()
-                        cat_id_map[old_id] = new_cat.id
-                        existing_cats[name.lower()] = new_cat
+                        obj = Category(name=name)
+                        db.session.add(obj); db.session.flush()
+                        cat_id_map[row.get("id")] = obj.id
+                        existing[name.lower()] = obj
                         cat_added += 1
 
-            # --- 2. Sensitivities ---
-            df_sen = read_csv_from_zip('sensitivities.csv')
+            # ── 2. Sensitivities ───────────────────────────────────────────
             sen_added = 0
-            if df_sen is not None and not df_sen.empty:
-                existing_sens = {s.name.strip().lower() for s in Sensitivity.query.all()}
-                for _, row in df_sen.iterrows():
+            if (df := get_sheet('Sensitivities')) is not None:
+                existing_set = {s.name.strip().lower() for s in Sensitivity.query.all()}
+                for _, row in df.iterrows():
                     name = str(row.get("name", "")).strip()
-                    if not name or name.lower() == 'nan': continue
-                    if name.lower() not in existing_sens:
-                        db.session.add(Sensitivity(name=name))
-                        existing_sens.add(name.lower())
-                        sen_added += 1
+                    if not name or name.lower() == 'nan' or name.lower() in existing_set: continue
+                    db.session.add(Sensitivity(name=name))
+                    existing_set.add(name.lower())
+                    sen_added += 1
 
-            # --- 3. Textures ---
-            df_tex = read_csv_from_zip('textures.csv')
+            # ── 3. Textures ────────────────────────────────────────────────
             tex_added = 0
-            if df_tex is not None and not df_tex.empty:
-                existing_tex = {t.name.strip().lower(): t for t in Texture.query.all()}
-                for _, row in df_tex.iterrows():
-                    old_id = row.get("id")
+            if (df := get_sheet('Textures')) is not None:
+                existing = {t.name.strip().lower(): t for t in Texture.query.all()}
+                for _, row in df.iterrows():
                     name = str(row.get("name", "")).strip()
                     if not name or name.lower() == 'nan': continue
-                    if name.lower() in existing_tex:
-                        tex_id_map[old_id] = existing_tex[name.lower()].id
+                    if name.lower() in existing:
+                        tex_id_map[row.get("id")] = existing[name.lower()].id
                     else:
-                        new_tex = Texture(name=name)
-                        db.session.add(new_tex)
-                        db.session.flush()
-                        tex_id_map[old_id] = new_tex.id
-                        existing_tex[name.lower()] = new_tex
+                        obj = Texture(name=name)
+                        db.session.add(obj); db.session.flush()
+                        tex_id_map[row.get("id")] = obj.id
+                        existing[name.lower()] = obj
                         tex_added += 1
 
-            # --- 4. Diets ---
-            df_diet = read_csv_from_zip('diets.csv')
+            # ── 4. Diets ───────────────────────────────────────────────────
             diet_added = 0
-            if df_diet is not None and not df_diet.empty:
-                existing_diets = {d.name.strip().lower() for d in Diet.query.all()}
-                for _, row in df_diet.iterrows():
+            if (df := get_sheet('Diets')) is not None:
+                existing = {d.name.strip().lower(): d for d in Diet.query.all()}
+                for _, row in df.iterrows():
                     name = str(row.get("name", "")).strip()
                     if not name or name.lower() == 'nan': continue
-                    if name.lower() not in existing_diets:
-                        db.session.add(Diet(name=name))
-                        existing_diets.add(name.lower())
+                    if name.lower() in existing:
+                        diet_id_map[row.get("id")] = existing[name.lower()].id
+                    else:
+                        obj = Diet(name=name)
+                        db.session.add(obj); db.session.flush()
+                        diet_id_map[row.get("id")] = obj.id
+                        existing[name.lower()] = obj
                         diet_added += 1
 
             db.session.commit()
 
-            # --- 5. FoodItems ---
-            df_prod = read_csv_from_zip('products.csv')
-            prod_added = 0
-            if df_prod is not None and not df_prod.empty:
-                existing_prods_names = {p.name.strip().lower() for p in FoodItem.query.all()}
-                
-                for _, row in df_prod.iterrows():
+            # ── 5. Products ────────────────────────────────────────────────
+            prod_added, prod_id_map = 0, {}
+            if (df := get_sheet('Products')) is not None:
+                existing_names = {p.name.strip().lower(): p for p in FoodItem.query.all()}
+                for _, row in df.iterrows():
                     name = str(row.get("name", "")).strip()
                     if not name or name.lower() == 'nan': continue
-                    if name.lower() in existing_prods_names: continue
-                    
-                    old_cat_id = row.get("category_id")
-                    old_tex_id = row.get("texture_id")
-                    
-                    new_cat_id = cat_id_map.get(old_cat_id) if pd.notna(old_cat_id) else None
-                    new_tex_id = tex_id_map.get(old_tex_id) if pd.notna(old_tex_id) else None
+                    if name.lower() in existing_names:
+                        prod_id_map[row.get("id")] = existing_names[name.lower()].id
+                        continue
 
-                    # Handle image uploading if we have a locally zipped image or URL
-                    image_url = str(row.get("image_url", ""))
-                    final_image_url = ""
-                    
-                    if image_url and image_url.lower() != 'nan':
-                        if image_url.startswith("images/") and image_url in file_names and supabase:
-                            # Read raw byte data directly from the uploaded zip
-                            img_data = zf.read(image_url)
-                            ext = image_url.split('.')[-1]
-                            unique_filename = f"{uuid.uuid4().hex}_imported.{ext}"
-                            mime_type = f"image/{ext}" if ext != 'jpg' else 'image/jpeg'
-                            
+                    # Upload bundled image to Supabase if present
+                    img_val = str(row.get("image_url", ""))
+                    final_url = ""
+                    if img_val and img_val.lower() != 'nan':
+                        if img_val.startswith("images/") and img_val in zip_names and supabase:
+                            ext = img_val.split('.')[-1]
+                            fname = f"{uuid.uuid4().hex}_imported.{ext}"
+                            mime = f"image/{ext}" if ext != 'jpg' else 'image/jpeg'
                             try:
-                                supabase.storage.from_("products").upload(
-                                    path=unique_filename,
-                                    file=img_data,
-                                    file_options={"content-type": mime_type}
-                                )
-                                final_image_url = supabase.storage.from_("products").get_public_url(unique_filename)
+                                supabase.storage.from_("products").upload(path=fname, file=zf.read(img_val), file_options={"content-type": mime})
+                                final_url = supabase.storage.from_("products").get_public_url(fname)
                             except Exception as e:
-                                print(f"Failed to upload packaged image {image_url} to supabase: {e}")
-                        elif image_url.startswith("http"):
-                            # Fallback if the user uploaded an older zip that relies on external URLs
-                            final_image_url = image_url
+                                print(f"Image upload failed: {e}")
+                        elif img_val.startswith("http"):
+                            final_url = img_val
 
-                    def parse_json_col(val):
-                        if pd.isna(val): return []
-                        try: return json.loads(val)
-                        except: return []
+                    def _n(col, default=0):
+                        v = row.get(col, default)
+                        return v if pd.notna(v) else default
 
-                    def parse_vector_col(val):
-                        # Deserialize a JSON-encoded vector string back to a float list
-                        if pd.isna(val) or str(val).strip() == "": return None
-                        try: return json.loads(val)
-                        except: return None
-
-                    new_prod = FoodItem(
-                        name=name,
-                        category_id=new_cat_id,
-                        image_url=final_image_url,
-                        iddsi=row.get("iddsi", 0) if pd.notna(row.get("iddsi")) else 0,
-                        calories=row.get("calories", 0) if pd.notna(row.get("calories")) else 0,
-                        protein=row.get("protein", 0) if pd.notna(row.get("protein")) else 0,
-                        carbs=row.get("carbs", 0) if pd.notna(row.get("carbs")) else 0,
-                        fat=row.get("fat", 0) if pd.notna(row.get("fat")) else 0,
-                        sugars=row.get("sugars", 0) if pd.notna(row.get("sugars")) else 0,
-                        sodium=row.get("sodium", 0) if pd.notna(row.get("sodium")) else 0,
-                        contains=parse_json_col(row.get("contains")),
-                        may_contain=parse_json_col(row.get("may_contain")),
-                        texture_id=new_tex_id,
-                        properties=parse_json_col(row.get("properties")),
-                        company=row.get("company", "") if pd.notna(row.get("company")) else "",
-                        texture_notes=row.get("texture_notes", "") if pd.notna(row.get("texture_notes")) else "",
-                        allergy_notes=row.get("allergy_notes", "") if pd.notna(row.get("allergy_notes")) else "",
-                        forbidden_for=row.get("forbidden_for", "") if pd.notna(row.get("forbidden_for")) else "",
-                        nutrition_vector=parse_vector_col(row.get("nutrition_vector")),
-                        openai_embedding=parse_vector_col(row.get("openai_embedding")),
+                    obj = FoodItem(
+                        name=name, category_id=cat_id_map.get(_n("category_id")) if pd.notna(row.get("category_id")) else None,
+                        image_url=final_url, iddsi=_n("iddsi"),
+                        calories=_n("calories"), protein=_n("protein"), carbs=_n("carbs"),
+                        fat=_n("fat"), sugars=_n("sugars"), sodium=_n("sodium"),
+                        contains=_parse_json_col(row.get("contains")),
+                        may_contain=_parse_json_col(row.get("may_contain")),
+                        texture_id=tex_id_map.get(row.get("texture_id")) if pd.notna(row.get("texture_id")) else None,
+                        properties=_parse_json_col(row.get("properties")),
+                        company=str(_n("company", "")), texture_notes=str(_n("texture_notes", "")),
+                        allergy_notes=str(_n("allergy_notes", "")), forbidden_for=str(_n("forbidden_for", "")),
+                        nutrition_vector=_parse_vector_col(row.get("nutrition_vector")),
+                        openai_embedding=_parse_vector_col(row.get("openai_embedding")),
                     )
-                    db.session.add(new_prod)
-                    existing_prods_names.add(name.lower())
+                    db.session.add(obj); db.session.flush()
+                    prod_id_map[row.get("id")] = obj.id
+                    existing_names[name.lower()] = obj
                     prod_added += 1
-                
+                db.session.commit()
+
+            # ── 6. Meals ───────────────────────────────────────────────────
+            meal_added = 0
+            if (df := get_sheet('Meals')) is not None:
+                existing_names_set = {m.name.strip().lower() for m in Meal.query.all()}
+                for _, row in df.iterrows():
+                    name = str(row.get("name", "")).strip()
+                    if not name or name.lower() == 'nan' or name.lower() in existing_names_set: continue
+
+                    old_diet = row.get("diet_id")
+                    new_diet = diet_id_map.get(old_diet) if pd.notna(old_diet) else None
+
+                    raw_pids = _parse_json_col(row.get("product_ids"))
+                    new_pids = [prod_id_map.get(pid, pid) for pid in raw_pids]
+
+                    obj = Meal(
+                        name=name,
+                        description=str(row.get("description", "")) if pd.notna(row.get("description")) else "",
+                        diet_id=new_diet, product_ids=new_pids,
+                        total_calories=row.get("total_calories", 0) if pd.notna(row.get("total_calories")) else 0,
+                        total_protein=row.get("total_protein", 0) if pd.notna(row.get("total_protein")) else 0,
+                        total_carbs=row.get("total_carbs", 0) if pd.notna(row.get("total_carbs")) else 0,
+                        total_fat=row.get("total_fat", 0) if pd.notna(row.get("total_fat")) else 0,
+                        total_sugars=row.get("total_sugars", 0) if pd.notna(row.get("total_sugars")) else 0,
+                        total_sodium=row.get("total_sodium", 0) if pd.notna(row.get("total_sodium")) else 0,
+                        filter_restriction_ids=_parse_json_col(row.get("filter_restriction_ids")),
+                        filter_texture_ids=_parse_json_col(row.get("filter_texture_ids")),
+                        filter_show_may_contain=bool(row.get("filter_show_may_contain", False)),
+                    )
+                    db.session.add(obj)
+                    existing_names_set.add(name.lower())
+                    meal_added += 1
                 db.session.commit()
 
         return jsonify({
             "message": "ייבוא הושלם בהצלחה!",
             "details": {
-                "categories_added": cat_added,
-                "sensitivities_added": sen_added,
-                "textures_added": tex_added,
-                "diets_added": diet_added,
-                "products_added": prod_added
+                "categories_added": cat_added, "sensitivities_added": sen_added,
+                "textures_added": tex_added, "diets_added": diet_added,
+                "products_added": prod_added, "meals_added": meal_added,
             }
         }), 200
 
