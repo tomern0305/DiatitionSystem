@@ -20,7 +20,7 @@ const MealCatalogFilters: React.FC<MealCatalogFiltersProps> = ({
       onClick={() => onFilterDiet(null)}
       className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 ${
         filterDietId === null
-          ? "bg-blue-500 text-white border-blue-500 shadow-md shadow-blue-500/20"
+          ? "bg-blue-500 hover:bg-blue-700 text-white border-blue-500 shadow-md shadow-blue-500/20"
           : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600"
       }`}
     >

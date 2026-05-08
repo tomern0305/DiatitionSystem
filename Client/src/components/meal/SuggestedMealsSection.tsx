@@ -7,6 +7,7 @@ interface SuggestedMealsSectionProps {
   products: ProductData[];
   restrictionsData: RestrictionsData[];
   texturesData: TexturesData[];
+  onScrollToProduct: (id: number) => void;
 }
 
 /** Displays a list of pre-filtered suggested meals matching the active restrictions. */
@@ -15,6 +16,7 @@ const SuggestedMealsSection: React.FC<SuggestedMealsSectionProps> = ({
   products,
   restrictionsData,
   texturesData,
+  onScrollToProduct,
 }) => {
   if (meals.length === 0) return null;
 
@@ -57,6 +59,7 @@ const SuggestedMealsSection: React.FC<SuggestedMealsSectionProps> = ({
               products={products}
               restrictionsData={restrictionsData}
               texturesData={texturesData}
+              onScrollToProduct={onScrollToProduct}
             />
           </div>
         ))}

@@ -4,7 +4,13 @@ import TopBar from "../components/layout/TopBar";
 import ProductRow from "../components/settings/ProductRow";
 import Loader from "../components/layout/Loader";
 import Toast from "../components/layout/Toast";
+import CategoriesTableSection from "../components/settings/CategoriesTableSection";
+import SensitivitiesTableSection from "../components/settings/SensitivitiesTableSection";
+import TexturesTableSection from "../components/settings/TexturesTableSection";
+import DietsTableSection from "../components/settings/DietsTableSection";
 import type { ProductData, CategoryData } from "../types";
+
+type ActiveTab = "products" | "variables";
 
 interface ProductSettingsPageProps {
   setIsSideMenuOpen?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -23,6 +29,9 @@ const ProductSettingsPage = ({
     text: string;
     type: "success" | "error";
   } | null>(null);
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<ActiveTab>("products");
 
   // Form State
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -118,112 +127,117 @@ const ProductSettingsPage = ({
       dir="rtl"
     >
       <div className="w-full mx-auto space-y-8">
-        <TopBar title="ניהול מוצרים" setIsSideMenuOpen={setIsSideMenuOpen}>
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            {/* Add New Product */}
+        <TopBar title="הגדרות" setIsSideMenuOpen={setIsSideMenuOpen}>
+          {activeTab === "products" && (
             <button
               onClick={() => setIsFormOpen(!isFormOpen)}
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-[0_4px_14px_rgba(37,99,235,0.25)] transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-[0_4px_14px_rgba(37,99,235,0.25)] transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               {isFormOpen ? (
                 <>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                   ביטול
                 </>
               ) : (
                 <>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15"
-                    />
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
                   הוסף מוצר חדש
                 </>
               )}
             </button>
-          </div>
+          )}
         </TopBar>
 
-        {/* Add Product Form */}
-        {isFormOpen && (
-          <AddProductForm
-            onProductAdded={handleProductAdded}
-            onCancel={() => setIsFormOpen(false)}
-          />
-        )}
-
-        {/* Products List (Table) */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-right border-collapse">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="p-4 w-10"></th>
-                  <th className="p-4 font-semibold text-gray-600">תמונה</th>
-                  <th className="p-4 font-semibold text-gray-600">שם המוצר</th>
-                  <th className="p-4 font-semibold text-gray-600">קטגוריה</th>
-                  <th className="p-4 font-semibold text-gray-600">חברה</th>
-                  <th className="p-4 font-semibold text-gray-600">IDDSI</th>
-                  <th className="p-4 font-semibold text-gray-600">קלוריות</th>
-                  <th className="p-4 font-semibold text-gray-600">
-                    חלבונים (ג')
-                  </th>
-                  <th className="p-4 font-semibold text-gray-600">
-                    תאריך עריכה אחרון
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {products.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={9}
-                      className="p-8 text-center text-gray-500 text-lg"
-                    >
-                      אין מוצרים קיימים במערכת.
-                    </td>
-                  </tr>
-                ) : (
-                  products.map((p) => (
-                    <ProductRow
-                      key={p.id}
-                      product={p}
-                      categories={categories}
-                      isExpanded={expandedRowId === p.id}
-                      onToggleExpand={() =>
-                        setExpandedRowId(expandedRowId === p.id ? null : p.id)
-                      }
-                      onSave={handleProductUpdate}
-                      onDelete={handleProductDelete}
-                    />
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        {/* Tab bar */}
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+          <button
+            onClick={() => setActiveTab("products")}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === "products"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            ניהול מוצרים
+          </button>
+          <button
+            onClick={() => setActiveTab("variables")}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === "variables"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            ניהול משתנים
+          </button>
         </div>
+
+        {activeTab === "products" ? (
+          <>
+            {/* Add Product Form */}
+            {isFormOpen && (
+              <AddProductForm
+                onProductAdded={handleProductAdded}
+                onCancel={() => setIsFormOpen(false)}
+              />
+            )}
+
+            {/* Products List (Table) */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-right border-collapse">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="p-4 w-10"></th>
+                      <th className="p-4 font-semibold text-gray-600">תמונה</th>
+                      <th className="p-4 font-semibold text-gray-600">שם המוצר</th>
+                      <th className="p-4 font-semibold text-gray-600">קטגוריה</th>
+                      <th className="p-4 font-semibold text-gray-600">חברה</th>
+                      <th className="p-4 font-semibold text-gray-600">IDDSI</th>
+                      <th className="p-4 font-semibold text-gray-600">קלוריות</th>
+                      <th className="p-4 font-semibold text-gray-600">חלבונים (ג')</th>
+                      <th className="p-4 font-semibold text-gray-600">תאריך עריכה אחרון</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {products.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="p-8 text-center text-gray-500 text-lg">
+                          אין מוצרים קיימים במערכת.
+                        </td>
+                      </tr>
+                    ) : (
+                      products.map((p) => (
+                        <ProductRow
+                          key={p.id}
+                          product={p}
+                          categories={categories}
+                          isExpanded={expandedRowId === p.id}
+                          onToggleExpand={() =>
+                            setExpandedRowId(expandedRowId === p.id ? null : p.id)
+                          }
+                          onSave={handleProductUpdate}
+                          onDelete={handleProductDelete}
+                        />
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 items-start">
+            <CategoriesTableSection />
+            <SensitivitiesTableSection />
+            <TexturesTableSection />
+            <DietsTableSection />
+          </div>
+        )}
       </div>
 
       {/* Toast Notification */}

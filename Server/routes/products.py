@@ -58,6 +58,14 @@ def make_semantic_search_text_for_embedding(data: dict) -> str:
     allergy_notes = data.get('allergyNotes', '')
     forbidden_for = data.get('forbiddenFor', '')
 
+    category_name = data.get('category', '')
+    if not category_name:
+        from models import Category
+        cat_id = data.get('category_id')
+        if cat_id:
+            cat = Category.query.get(cat_id)
+            category_name = cat.name if cat else ''
+
     # Format list fields — fall back to readable "none" strings
     contains_str    = ", ".join(contains)    if contains    else "ללא"
     may_contain_str = ", ".join(may_contain) if may_contain else "ללא"
@@ -65,6 +73,7 @@ def make_semantic_search_text_for_embedding(data: dict) -> str:
 
     parts = [
         f"שם מוצר: {name}.",
+        f"קטגוריה: {category_name}." if category_name else None,
         f"חברה: {company}." if company else None,
         f"מרקם IDDSI: {iddsi}.",
         f"קלוריות: {calories} קק״ל, חלבון: {protein}g, פחמימות: {carbs}g, שומן: {fat}g, סוכר: {sugars}g, נתרן: {sodium}mg.",
@@ -93,6 +102,107 @@ def build_product_embedding_pipeline(data: dict) -> list[float]:
     print(f"[Embedding] Semantic text: {semantic_text}")   # helpful during dev
     embedding = get_embedding(semantic_text)
     return embedding
+
+@products_bp.route('/api/products/ai-status', methods=['GET'])
+def ai_status():
+    """Returns whether AI/semantic search features are enabled on this server."""
+    enabled = os.environ.get("AI_ENABLED", "false").lower() == "true"
+    return jsonify({"ai_enabled": enabled})
+
+@products_bp.route('/api/products/semantic-search', methods=['POST'])
+def semantic_search():
+    """Natural language semantic search: embeds the query and ranks products by cosine distance."""
+    from sqlalchemy import text as sa_text
+
+    if os.environ.get("AI_ENABLED", "false").lower() != "true":
+        return jsonify({"error": "AI features are not enabled"}), 503
+
+    body = request.json or {}
+    query = (body.get("query") or "").strip()
+    limit = min(int(body.get("limit", 20)), 50)
+
+    if not query:
+        return jsonify([])
+
+    query_embedding = get_embedding(query)
+    vec_str = "[" + ",".join(str(v) for v in query_embedding) + "]"
+
+    rows = db.session.execute(
+        sa_text("""
+            WITH vector_search AS (
+                SELECT id,
+                       ROW_NUMBER() OVER (ORDER BY openai_embedding <=> CAST(:vec AS vector)) AS rank,
+                       (openai_embedding <=> CAST(:vec AS vector)) AS distance
+                FROM food_items
+                WHERE openai_embedding IS NOT NULL
+                  AND (openai_embedding <=> CAST(:vec AS vector)) < 0.7
+                LIMIT 40
+            ),
+            text_search AS (
+                SELECT id,
+                       ROW_NUMBER() OVER (ORDER BY ts_rank(search_vector, query) DESC) AS rank
+                FROM food_items,
+                     plainto_tsquery('simple', :text_query) AS query
+                WHERE search_vector @@ query
+                LIMIT 40
+            ),
+            rrf AS (
+                SELECT
+                    COALESCE(v.id, t.id) AS id,
+                    COALESCE(1.0 / (60 + v.rank), 0) + COALESCE(1.0 / (60 + t.rank), 0) AS rrf_score,
+                    v.distance
+                FROM vector_search v
+                FULL OUTER JOIN text_search t ON v.id = t.id
+            )
+            SELECT id, rrf_score, distance
+            FROM rrf
+            ORDER BY rrf_score DESC
+            LIMIT :limit
+        """),
+        {"vec": vec_str, "text_query": query, "limit": limit}
+    ).fetchall()
+
+    if not rows:
+        return jsonify([])
+
+    id_to_distance = {row[0]: float(row[2]) if row[2] is not None else None for row in rows}
+    ordered_ids = [row[0] for row in rows]
+
+    products = FoodItem.query.filter(FoodItem.id.in_(ordered_ids)).all()
+    product_map = {p.id: p for p in products}
+
+    result = []
+    for pid in ordered_ids:
+        p = product_map.get(pid)
+        if not p:
+            continue
+        result.append({
+            "id": str(p.id),
+            "category": p.category_rel.name if p.category_rel else 'כללי',
+            "category_id": p.category_id,
+            "image": p.image_url,
+            "name": p.name,
+            "iddsi": p.iddsi,
+            "calories": p.calories,
+            "protein": p.protein,
+            "carbs": p.carbs,
+            "fat": p.fat,
+            "sugares": p.sugars,
+            "sodium": p.sodium,
+            "contains": p.contains,
+            "mayContain": p.may_contain,
+            "texture": p.texture_rel.name if p.texture_rel else None,
+            "texture_id": p.texture_id,
+            "properties": p.properties,
+            "company": p.company,
+            "textureNotes": p.texture_notes,
+            "allergyNotes": p.allergy_notes,
+            "forbiddenFor": p.forbidden_for,
+            "lastEditDate": p.updated_at.strftime('%Y-%m-%d %H:%M:%S') if p.updated_at else None,
+            "distance": id_to_distance[pid],
+        })
+
+    return jsonify(result)
 
 @products_bp.route('/api/products', methods=['GET'])
 def get_products():

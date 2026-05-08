@@ -42,6 +42,22 @@ def run_migrations():
         db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS nutrition_vector vector(6);"))
         db.session.execute(text("ALTER TABLE food_items ADD COLUMN IF NOT EXISTS openai_embedding vector(1536);"))
         db.session.execute(text("""
+            ALTER TABLE food_items
+              ADD COLUMN IF NOT EXISTS search_vector tsvector
+              GENERATED ALWAYS AS (
+                to_tsvector('simple',
+                  coalesce(name, '') || ' ' ||
+                  coalesce(company, '') || ' ' ||
+                  coalesce(texture_notes, '') || ' ' ||
+                  coalesce(allergy_notes, '') || ' ' ||
+                  coalesce(forbidden_for, '')
+                )
+              ) STORED;
+        """))
+        db.session.execute(text(
+            "CREATE INDEX IF NOT EXISTS food_items_search_vector_gin ON food_items USING GIN (search_vector);"
+        ))
+        db.session.execute(text("""
             CREATE TABLE IF NOT EXISTS meals (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(200) NOT NULL,

@@ -7,7 +7,7 @@ const API = import.meta.env.VITE_API_URL;
 
 // Role-based redirect after successful login
 const roleHome = (role: string) => {
-  if (role === "admin") return "/admin";
+  // if (role === "admin") return "/";
   if (role === "lineworker") return "/lineworker";
   return "/";
 };

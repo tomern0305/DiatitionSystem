@@ -4,7 +4,6 @@ import SideMenu from "./components/layout/SideMenu";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import ProductsPage from "./pages/ProductsPage";
 import ProductSettingsPage from "./pages/ProductSettingsPage";
-import CategorySettingsPage from "./pages/CategorySettingsPage";
 import LineWorkerProductsPage from "./pages/LineWorkerProductsPage";
 import CreateMealPage from "./pages/CreateMealPage";
 import MealsCatalogPage from "./pages/MealsCatalogPage";
@@ -61,14 +60,6 @@ const App = () => {
             }
           />
           <Route
-            path="/settings/categories"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "dietitian"]}>
-                <CategorySettingsPage setIsSideMenuOpen={setIsSideMenuOpen} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/meals"
             element={
               <ProtectedRoute allowedRoles={["admin", "dietitian", "lineworker"]}>
@@ -82,7 +73,8 @@ const App = () => {
               <ProtectedRoute allowedRoles={["admin", "dietitian"]}>
                 <CreateMealPage setIsSideMenuOpen={setIsSideMenuOpen} />
               </ProtectedRoute>
-            }
+            } 
+            // Deprecated, rout is active but button removed from menu -Tomer
           />
 
           {/* Lineworker + Admin */}

@@ -4,11 +4,13 @@ import Toast from "../components/layout/Toast";
 import LoadingGuard from "../components/layout/LoadingGuard";
 import MealCard from "../components/meal/MealCard";
 import MealEditDrawer from "../components/meal/MealEditDrawer";
+import MealCreateDrawer from "../components/meal/MealCreateDrawer";
 import MealCatalogFilters from "../components/meal/MealCatalogFilters";
 import { useToast } from "../hooks/useToast";
 import { useAllergenNames } from "../hooks/useAllergenNames";
 import { useFilteredProducts } from "../hooks/useFilteredProducts";
 import { useMealNutritionTotals } from "../hooks/useMealNutritionTotals";
+import { useAuth } from '../context/AuthContext';
 import type { MealData, ProductData, DietData, RestrictionsData, TexturesData } from "../types";
 
 interface MealsCatalogPageProps {
@@ -30,6 +32,9 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
   const { toast, showToast, dismissToast } = useToast();
   const [deleting, setDeleting] = useState<number | null>(null);
 
+  // ── Create drawer state ───────────────────────────────────────────────────────
+  const [createOpen, setCreateOpen] = useState(false);
+
   // ── Edit drawer state ─────────────────────────────────────────────────────────
   const [editMeal, setEditMeal] = useState<MealData | null>(null);
   const [editProducts, setEditProducts] = useState<ProductData[]>([]);
@@ -47,6 +52,11 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
   // ── Catalog filter / sort state ───────────────────────────────────────────────
   const [filterDietId, setFilterDietId] = useState<number | null>(null);
   const [sortAZ, setSortAZ] = useState(false);
+
+  // ── User Role Type - Helps to hide buttons
+  const { user } = useAuth();
+  type UserRole = 'admin' | 'line' | 'dietitian';
+  const userType = user?.role as UserRole;
 
   // ── Derived: filtered + sorted meals ─────────────────────────────────────────
   const displayedMeals = useMemo(() => {
@@ -179,6 +189,17 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
                 onToggleSort={() => setSortAZ((v) => !v)}
               />
             )}
+            {(userType === 'dietitian' || userType === 'admin') && (
+            <button
+              onClick={() => setCreateOpen(true)}
+              className="w-full sm:w-auto bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-6 rounded-xl shadow-[0_4px_14px_rgba(37,99,235,0.25)] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              ארוחה חדשה
+            </button>
+            )}
           </TopBar>
 
           {/* Empty state */}
@@ -210,6 +231,18 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
             </div>
           )}
         </div>
+
+        {/* Create drawer */}
+        {createOpen && (
+          <MealCreateDrawer
+            diets={diets}
+            products={products}
+            restrictionsData={restrictionsData}
+            texturesData={texturesData}
+            onClose={() => setCreateOpen(false)}
+            onCreated={(meal) => setMeals((prev) => [...prev, meal])}
+          />
+        )}
 
         {/* Edit drawer */}
         {editMeal && (

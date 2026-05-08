@@ -6,6 +6,7 @@ interface MealSummeryLineCardProps {
   products: ProductData[];
   restrictionsData: RestrictionsData[];
   texturesData: TexturesData[];
+  onScrollToProduct: (id: number) => void;
 }
 
 /** A compact single-row meal card for fast-paced tray/line work. */
@@ -14,6 +15,7 @@ const MealSummeryLineCard: React.FC<MealSummeryLineCardProps> = ({
   products,
   restrictionsData,
   texturesData,
+  onScrollToProduct,
 }) => {
   const restrictions = meal.filters.restriction_ids
     .map((id) => restrictionsData.find((r) => r.id === id)?.name)
@@ -28,15 +30,10 @@ const MealSummeryLineCard: React.FC<MealSummeryLineCardProps> = ({
     .map((id) => ({ id, name: productMap.get(id) }))
     .filter((i): i is { id: number; name: string } => !!i.name);
 
-  // Scroll to the product card in the catalog and blink it
   const scrollToProduct = (id: number) => {
     const el = document.getElementById(`product-${id}`);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    el.classList.remove("product-highlight");
-    void el.offsetWidth; // force reflow so animation restarts
-    el.classList.add("product-highlight");
-    setTimeout(() => el.classList.remove("product-highlight"), 900);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    onScrollToProduct(id);
   };
 
   return (

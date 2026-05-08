@@ -65,28 +65,36 @@ const MealEditDrawer: React.FC<MealEditDrawerProps> = ({
         </button>
       </div>
 
+      {/* Nutrition summary — full width */}
+      <div className="shrink-0 px-6 pt-5 pb-0">
+        <MealNutritionSummary totalCalories={editTotals.calories} macros={buildMacros(editTotals)} />
+      </div>
+
       {/* Two-pane body */}
       <div className="flex-1 flex flex-col xl:flex-row gap-0 overflow-hidden">
-        {/* Right pane: builder cards */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-5">
-          <MealNutritionSummary totalCalories={editTotals.calories} macros={buildMacros(editTotals)} />
-          <MealDetailsForm
-            mealName={editName}
-            mealDescription={editDesc}
-            selectedDietId={editDietId}
-            diets={diets}
-            onMealNameChange={onNameChange}
-            onMealDescriptionChange={onDescChange}
-            onDietChange={onDietChange}
-          />
-          <MealIngredientsList
-            selectedProducts={editProducts}
-            saving={saving}
-            canSave={editProducts.length > 0 && editName.trim().length > 0}
-            onRemove={onRemoveProduct}
-            onClearAll={onClearProducts}
-            onSave={onSave}
-          />
+        {/* Right pane: details + ingredients */}
+        <div className="flex-1 flex flex-col p-6 gap-5 overflow-hidden">
+          <div className="shrink-0">
+            <MealDetailsForm
+              mealName={editName}
+              mealDescription={editDesc}
+              selectedDietId={editDietId}
+              diets={diets}
+              onMealNameChange={onNameChange}
+              onMealDescriptionChange={onDescChange}
+              onDietChange={onDietChange}
+            />
+          </div>
+          <div className="flex-1 min-h-0">
+            <MealIngredientsList
+              selectedProducts={editProducts}
+              saving={saving}
+              canSave={editProducts.length > 0 && editName.trim().length > 0}
+              onRemove={onRemoveProduct}
+              onClearAll={onClearProducts}
+              onSave={onSave}
+            />
+          </div>
         </div>
 
         {/* Left pane: product library */}
