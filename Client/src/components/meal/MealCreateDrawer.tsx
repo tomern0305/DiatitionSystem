@@ -7,6 +7,7 @@ import { buildMacros } from "../../utils/mealMacros";
 import { useAllergenNames } from "../../hooks/useAllergenNames";
 import { useFilteredProducts } from "../../hooks/useFilteredProducts";
 import { useMealNutritionTotals } from "../../hooks/useMealNutritionTotals";
+import { useAuth } from "../../context/AuthContext";
 import type { MealData, ProductData, DietData, RestrictionsData, TexturesData } from "../../types";
 
 interface MealCreateDrawerProps {
@@ -42,12 +43,13 @@ const MealCreateDrawer: React.FC<MealCreateDrawerProps> = ({
     texturesData,
   });
   const totals = useMealNutritionTotals(selectedProducts);
+  const { authFetch } = useAuth();
 
   const handleSave = async () => {
     if (!mealName.trim() || selectedProducts.length === 0) return;
     setSaving(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/meals`, {
+      const res = await authFetch(`${import.meta.env.VITE_API_URL}/api/meals`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -65,7 +67,7 @@ const MealCreateDrawer: React.FC<MealCreateDrawerProps> = ({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "שגיאה לא ידועה");
-      const mealRes = await fetch(`${import.meta.env.VITE_API_URL}/api/meals/${json.id}`);
+      const mealRes = await authFetch(`${import.meta.env.VITE_API_URL}/api/meals/${json.id}`);
       const meal = await mealRes.json();
       onCreated(meal);
       onClose();

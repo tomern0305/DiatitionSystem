@@ -127,8 +127,8 @@ const MealCard: React.FC<MealCardProps> = ({
         </div>
       )}
 
-      {/* Footer: creation date */}
-      <div className="px-5 py-2.5 border-t border-gray-50 bg-gray-50/50">
+      {/* Footer: creation date + creator name for admins on temp meals */}
+      <div className="px-5 py-2.5 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between">
         <span className="text-xs text-gray-400">
           {new Date(meal.created_at).toLocaleDateString("he-IL", {
             day: "2-digit",
@@ -136,6 +136,9 @@ const MealCard: React.FC<MealCardProps> = ({
             year: "numeric",
           })}
         </span>
+        {!meal.is_global && meal.created_by_username && userType === 'admin' && (
+          <span className="text-xs text-amber-600 font-medium">{meal.created_by_username}</span>
+        )}
       </div>
     </div>
   );

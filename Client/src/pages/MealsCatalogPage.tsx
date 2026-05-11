@@ -54,25 +54,30 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
   const [sortAZ, setSortAZ] = useState(false);
 
   // ── User Role Type - Helps to hide buttons
-  const { user } = useAuth();
+  const { user, authFetch } = useAuth();
   type UserRole = 'admin' | 'line' | 'dietitian';
   const userType = user?.role as UserRole;
 
-  // ── Derived: filtered + sorted meals ─────────────────────────────────────────
-  const displayedMeals = useMemo(() => {
+  // ── Derived: filtered + sorted meals split by visibility ─────────────────────
+  const { globalMeals, tempMeals } = useMemo(() => {
     let list = filterDietId === null ? meals : meals.filter((m) => m.diet_id === filterDietId);
     if (sortAZ) list = [...list].sort((a, b) => a.name.localeCompare(b.name, "he"));
-    return list;
+    return {
+      globalMeals: list.filter((m) => m.is_global),
+      tempMeals:   list.filter((m) => !m.is_global),
+    };
   }, [meals, filterDietId, sortAZ]);
+
+  const displayedMeals = useMemo(() => [...globalMeals, ...tempMeals], [globalMeals, tempMeals]);
 
   // ── Data fetch ────────────────────────────────────────────────────────────────
   useEffect(() => {
     Promise.all([
-      fetch(`${import.meta.env.VITE_API_URL}/api/meals`).then((r) => r.json()),
-      fetch(`${import.meta.env.VITE_API_URL}/api/diets`).then((r) => r.json()),
-      fetch(`${import.meta.env.VITE_API_URL}/api/products`).then((r) => r.json()),
-      fetch(`${import.meta.env.VITE_API_URL}/api/sensitivities`).then((r) => r.json()),
-      fetch(`${import.meta.env.VITE_API_URL}/api/texture`).then((r) => r.json()),
+      authFetch(`${import.meta.env.VITE_API_URL}/api/meals`).then((r) => r.json()),
+      authFetch(`${import.meta.env.VITE_API_URL}/api/diets`).then((r) => r.json()),
+      authFetch(`${import.meta.env.VITE_API_URL}/api/products`).then((r) => r.json()),
+      authFetch(`${import.meta.env.VITE_API_URL}/api/sensitivities`).then((r) => r.json()),
+      authFetch(`${import.meta.env.VITE_API_URL}/api/texture`).then((r) => r.json()),
     ])
       .then(([md, dd, pd, sd, td]) => {
         setMeals(md); setDiets(dd); setProducts(pd);
@@ -104,7 +109,7 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
     if (!window.confirm("האם למחוק ארוחה זו לצמיתות?")) return;
     setDeleting(id);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/meals/${id}`, { method: "DELETE" });
+      const res = await authFetch(`${import.meta.env.VITE_API_URL}/api/meals/${id}`, { method: "DELETE" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
       setMeals((prev) => prev.filter((m) => m.id !== id));
@@ -132,7 +137,7 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
     if (!editMeal || !editName.trim()) return;
     setSaving(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/meals/${editMeal.id}`, {
+      const res = await authFetch(`${import.meta.env.VITE_API_URL}/api/meals/${editMeal.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -213,22 +218,48 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
             </div>
           )}
 
-          {/* Meal cards grid */}
-          {displayedMeals.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-              {displayedMeals.map((meal) => (
-                <MealCard
-                  key={meal.id}
-                  meal={meal}
-                  productMap={productMap}
-                  restrictionsData={restrictionsData}
-                  texturesData={texturesData}
-                  deleting={deleting}
-                  onEdit={openEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
+          {/* Global meals section */}
+          {globalMeals.length > 0 && (
+            <section className="space-y-4">
+              {(userType === 'admin' || userType === 'dietitian') && (
+                <h2 className="text-lg font-bold text-gray-700 border-b pb-1">ארוחות משותפות</h2>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {globalMeals.map((meal) => (
+                  <MealCard
+                    key={meal.id}
+                    meal={meal}
+                    productMap={productMap}
+                    restrictionsData={restrictionsData}
+                    texturesData={texturesData}
+                    deleting={deleting}
+                    onEdit={openEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Temp meals section — only visible to dietitians and admins */}
+          {tempMeals.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-lg font-bold text-amber-700 border-b border-amber-200 pb-1">ארוחות זמניות</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {tempMeals.map((meal) => (
+                  <MealCard
+                    key={meal.id}
+                    meal={meal}
+                    productMap={productMap}
+                    restrictionsData={restrictionsData}
+                    texturesData={texturesData}
+                    deleting={deleting}
+                    onEdit={openEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </section>
           )}
         </div>
 

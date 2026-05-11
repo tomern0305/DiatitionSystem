@@ -27,13 +27,21 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupStatus, setBackupStatus] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  // Load users once token is available; re-runs if token changes
+  const [embeddingLoading, setEmbeddingLoading] = useState(false);
+  const [embeddingStatus, setEmbeddingStatus] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [aiEnabled, setAiEnabled] = useState(false);
+
+  // Load users and AI flag once token is available
   useEffect(() => {
     if (!token) return;
     authFetch(`${API}/api/users`)
       .then((r) => r.json())
       .then((data) => setUsers(Array.isArray(data) ? data : []))
       .catch(() => setError("שגיאה בטעינת המשתמשים"));
+    fetch(`${API}/api/products/ai-status`)
+      .then((r) => r.json())
+      .then((data) => setAiEnabled(data.ai_enabled === true))
+      .catch(() => {});
   }, [token]);
 
   const handleRoleChange = async (userId: number, newRole: string) => {
@@ -113,6 +121,21 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
     }
   };
 
+  const handleBackfillEmbeddings = async () => {
+    setEmbeddingLoading(true);
+    setEmbeddingStatus(null);
+    try {
+      const res = await authFetch(`${API}/api/system/backfill-embeddings`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "שגיאה");
+      setEmbeddingStatus({ text: `${data.message} עודכנו: ${data.updated} מוצרים.`, type: "success" });
+    } catch (err: any) {
+      setEmbeddingStatus({ text: `שגיאה: ${err.message}`, type: "error" });
+    } finally {
+      setEmbeddingLoading(false);
+    }
+  };
+
   const handleAddUser = async (username: string, tempPassword: string) => {
     const res = await authFetch(`${API}/api/users`, {
       method: "POST",
@@ -147,6 +170,27 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
           onRoleChange={handleRoleChange}
           onDelete={handleDelete}
         />
+
+        {/* AI Embeddings — only shown when AI_ENABLED=true on server */}
+        {aiEnabled && <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="font-bold text-gray-800 text-lg mb-1">הטמעות AI</h2>
+          <p className="text-sm text-gray-400 mb-4">מחשב מחדש את וקטור OpenAI לכל מוצר שעדיין לא חושב</p>
+          <button
+            onClick={handleBackfillEmbeddings}
+            disabled={embeddingLoading}
+            className="flex items-center gap-2 bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold py-2.5 px-4 rounded-xl transition-all shadow-sm disabled:opacity-50"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V15a1 1 0 0 0-2 0v1.93A8 8 0 0 1 4.07 11H6a1 1 0 0 0 0-2H4.07A8 8 0 0 1 11 4.07V6a1 1 0 0 0 2 0V4.07A8 8 0 0 1 19.93 11H18a1 1 0 0 0 0 2h1.93A8 8 0 0 1 13 16.93z" />
+            </svg>
+            {embeddingLoading ? "מחשב..." : "חשב הטמעות חסרות"}
+          </button>
+          {embeddingStatus && (
+            <p className={`mt-3 text-sm font-medium ${embeddingStatus.type === "success" ? "text-green-600" : "text-red-500"}`}>
+              {embeddingStatus.text}
+            </p>
+          )}
+        </div>}
 
         {/* Backup & Restore */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">

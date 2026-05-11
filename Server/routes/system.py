@@ -22,6 +22,43 @@ def status():
     return jsonify({"status": "Flask is running and connected to PostgreSQL!"})
 
 
+@system_bp.route('/api/system/backfill-embeddings', methods=['POST'])
+def backfill_embeddings():
+    """Recalculates openai_embedding for products with all-zero vectors; skips if AI_ENABLED is false."""
+    if (err := _require_admin()): return err
+
+    ai_enabled = os.environ.get("AI_ENABLED", "false").lower() == "true"
+    if not ai_enabled:
+        return jsonify({"message": "AI is disabled — skipping embedding backfill.", "updated": 0}), 200
+
+    products = FoodItem.query.all()
+    updated = 0
+    errors = []
+    for p in products:
+        if p.openai_embedding is not None and not all(v == 0.0 for v in p.openai_embedding):
+            continue
+        data = {
+            "name": p.name, "company": p.company, "iddsi": p.iddsi,
+            "calories": p.calories, "protein": p.protein, "carbs": p.carbs,
+            "fat": p.fat, "sugares": p.sugars, "sodium": p.sodium,
+            "contains": p.contains, "mayContain": p.may_contain,
+            "properties": p.properties, "textureNotes": p.texture_notes,
+            "allergyNotes": p.allergy_notes, "forbiddenFor": p.forbidden_for,
+        }
+        try:
+            embedding = build_product_embedding_pipeline(data)
+            if embedding:
+                p.openai_embedding = embedding
+                updated += 1
+        except Exception as e:
+            errors.append({"id": p.id, "name": p.name, "error": str(e)})
+
+    if updated:
+        db.session.commit()
+
+    return jsonify({"message": f"Backfill complete.", "updated": updated, "errors": errors}), 200
+
+
 @system_bp.route('/uploads/<filename>')
 def uploaded_file(filename):
     """Serves locally uploaded files (legacy use-case)."""
@@ -173,6 +210,8 @@ def export_database():
             "filter_restriction_ids": json.dumps(m.filter_restriction_ids or [], ensure_ascii=False),
             "filter_texture_ids": json.dumps(m.filter_texture_ids or [], ensure_ascii=False),
             "filter_show_may_contain": m.filter_show_may_contain,
+            "is_global": m.is_global,
+            "created_by": m.created_by,
         } for m in meals]
 
         # ── Write all sheets into one xlsx ─────────────────────────────────
@@ -358,6 +397,7 @@ def import_database():
                     raw_pids = _parse_json_col(row.get("product_ids"))
                     new_pids = [prod_id_map.get(pid, pid) for pid in raw_pids]
 
+                    raw_global = row.get("is_global", True)
                     obj = Meal(
                         name=name,
                         description=str(row.get("description", "")) if pd.notna(row.get("description")) else "",
@@ -371,6 +411,8 @@ def import_database():
                         filter_restriction_ids=_parse_json_col(row.get("filter_restriction_ids")),
                         filter_texture_ids=_parse_json_col(row.get("filter_texture_ids")),
                         filter_show_may_contain=bool(row.get("filter_show_may_contain", False)),
+                        is_global=bool(raw_global) if pd.notna(raw_global) else True,
+                        created_by=None,
                     )
                     db.session.add(obj)
                     existing_names_set.add(name.lower())

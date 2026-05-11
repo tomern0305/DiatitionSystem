@@ -134,5 +134,9 @@ class Meal(db.Model):
     # Whether "may contain" products were included in the library at save time
     filter_show_may_contain = db.Column(db.Boolean, default=False)
 
+    # Ownership & visibility
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    is_global  = db.Column(db.Boolean, nullable=False, default=True)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
