@@ -22,7 +22,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onDismiss }) => {
 
   return (
     <div
-      className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-lg border text-sm font-medium animate-slide-down ${
+      className={`fixed top-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-lg border text-sm font-medium animate-slide-down ${
         isSuccess
           ? "bg-white border-green-200 text-green-800"
           : "bg-white border-red-200 text-red-800"

@@ -25,10 +25,10 @@ const MealCard: React.FC<MealCardProps> = ({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col overflow-hidden hover:shadow-md transition-shadow duration-200">
       {/* Header: name, tags, edit/delete */}
-      <div className="px-5 py-4 border-b border-gray-100">
+      <div className="px-3 py-2.5 border-b border-gray-100">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="font-bold text-gray-800 text-lg leading-snug truncate">{meal.name}</h3>
+            <h3 className="font-bold text-gray-800 text-base leading-snug truncate">{meal.name}</h3>
             <div className="flex flex-wrap gap-1 mt-1">
               {meal.diet_name && (
                 <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
@@ -80,22 +80,22 @@ const MealCard: React.FC<MealCardProps> = ({
           </div>
         </div>
         {meal.description && (
-          <p className="text-sm text-gray-500 mt-1.5 line-clamp-2">{meal.description}</p>
+          <p className="text-xs text-gray-500 mt-1 line-clamp-2">{meal.description}</p>
         )}
       </div>
 
       {/* Nutrition mini-summary */}
-      <div className="px-5 py-4 flex-1">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-2xl font-black text-gray-800">
+      <div className="px-3 py-2.5 flex-1">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xl font-black text-gray-800">
             {meal.nutrition.calories.toFixed(0)}
-            <span className="text-sm font-normal text-gray-400 mr-1">קל'</span>
+            <span className="text-xs font-normal text-gray-400 mr-1">קל'</span>
           </span>
           <span className="text-xs text-gray-400">{meal.product_ids.length} מרכיבים</span>
         </div>
         <div className="grid grid-cols-3 gap-1.5">
           {macros.map((m) => (
-            <div key={m.label} className="bg-gray-50 rounded-lg px-2 py-1.5 border border-gray-100">
+            <div key={m.label} className="bg-gray-50 rounded-lg px-1.5 py-1 border border-gray-100">
               <div className="flex items-center gap-1 mb-0.5">
                 <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
                 <span className="text-xs text-gray-500 truncate">{m.label}</span>
@@ -111,13 +111,13 @@ const MealCard: React.FC<MealCardProps> = ({
 
       {/* Products list */}
       {meal.product_ids.length > 0 && (
-        <div className="mx-5 mb-4 rounded-xl border border-gray-100 overflow-hidden">
+        <div className="mx-3 mb-2.5 rounded-xl border border-gray-100 overflow-hidden">
           {meal.product_ids.map((pid, idx) => {
             const pname = productMap.get(pid)?.name;
             return pname ? (
               <div
                 key={pid}
-                className={`flex items-center gap-2.5 px-3 py-2 ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/60"}`}
+                className={`flex items-center gap-2 px-2.5 py-1.5 ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/60"}`}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0" />
                 <span className="text-xs text-gray-700 truncate">{pname}</span>
@@ -128,7 +128,7 @@ const MealCard: React.FC<MealCardProps> = ({
       )}
 
       {/* Footer: creation date + creator name for admins on temp meals */}
-      <div className="px-5 py-2.5 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between">
+      <div className="px-3 py-2 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between">
         <span className="text-xs text-gray-400">
           {new Date(meal.created_at).toLocaleDateString("he-IL", {
             day: "2-digit",

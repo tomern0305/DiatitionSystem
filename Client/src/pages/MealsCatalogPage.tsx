@@ -129,7 +129,10 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
     setEditProducts(
       meal.product_ids.map((id) => productMap.get(id)).filter(Boolean) as ProductData[],
     );
-    setLibSearch(""); setLibRestrictions([]); setLibTextures([]); setLibShowMayContain(false);
+    setLibSearch("");
+    setLibRestrictions(meal.filters.restriction_ids);
+    setLibTextures(meal.filters.texture_ids);
+    setLibShowMayContain(meal.filters.show_may_contain);
   };
   const closeEdit = () => setEditMeal(null);
 
@@ -146,7 +149,11 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
           diet_id: editDietId || null,
           product_ids: editProducts.map((p) => Number(p.id)),
           nutrition: editTotals,
-          filters: editMeal.filters,
+          filters: {
+            restriction_ids: libRestrictions,
+            texture_ids: libTextures,
+            show_may_contain: libShowMayContain,
+          },
         }),
       });
       const json = await res.json();
@@ -162,6 +169,11 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
                 diet_name: diets.find((d) => d.id === editDietId)?.name ?? null,
                 product_ids: editProducts.map((p) => Number(p.id)),
                 nutrition: editTotals,
+                filters: {
+                  restriction_ids: libRestrictions,
+                  texture_ids: libTextures,
+                  show_may_contain: libShowMayContain,
+                },
               }
             : m,
         ),
@@ -224,7 +236,7 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
               {(userType === 'admin' || userType === 'dietitian') && (
                 <h2 className="text-lg font-bold text-gray-700 border-b pb-1">ארוחות משותפות</h2>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                 {globalMeals.map((meal) => (
                   <MealCard
                     key={meal.id}
@@ -245,7 +257,7 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
           {tempMeals.length > 0 && (
             <section className="space-y-4">
               <h2 className="text-lg font-bold text-amber-700 border-b border-amber-200 pb-1">ארוחות זמניות</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                 {tempMeals.map((meal) => (
                   <MealCard
                     key={meal.id}
@@ -302,11 +314,28 @@ const MealsCatalogPage: React.FC<MealsCatalogPageProps> = ({ setIsSideMenuOpen }
             onClearProducts={() => setEditProducts([])}
             onAddProduct={(p) => setEditProducts((prev) => [...prev, p])}
             onSearchChange={setLibSearch}
-            onToggleRestriction={(id) =>
+            onToggleRestriction={(id) => {
+              const isAdding = !libRestrictions.includes(id);
+              if (isAdding) {
+                const restrictionName = restrictionsData.find((r) => r.id === id)?.name;
+                if (restrictionName) {
+                  const conflicts = editProducts.filter((p) =>
+                    (p.contains ?? []).includes(restrictionName) ||
+                    (p.mayContain ?? []).includes(restrictionName)
+                  );
+                  if (conflicts.length > 0) {
+                    showToast(
+                      `לא ניתן להוסיף הגבלה "${restrictionName}" — ${conflicts.map((p) => p.name).join(", ")} מכיל/ים אלרגן זה`,
+                      "error"
+                    );
+                    return;
+                  }
+                }
+              }
               setLibRestrictions((prev) =>
-                prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-              )
-            }
+                prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+              );
+            }}
             onToggleTexture={(id) => setLibTextures((prev) => (prev.includes(id) ? [] : [id]))}
             onToggleMayContain={() => setLibShowMayContain((v) => !v)}
           />

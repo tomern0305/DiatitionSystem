@@ -139,11 +139,25 @@ const MealCreateDrawer: React.FC<MealCreateDrawerProps> = ({
               selectedTextures={libTextures}
               showMayContain={libShowMayContain}
               onSearchChange={setLibSearch}
-              onToggleRestriction={(id) =>
+              onToggleRestriction={(id) => {
+                const isAdding = !libRestrictions.includes(id);
+                if (isAdding) {
+                  const restrictionName = restrictionsData.find((r) => r.id === id)?.name;
+                  if (restrictionName) {
+                    const conflicts = selectedProducts.filter((p) =>
+                      (p.contains ?? []).includes(restrictionName) ||
+                      (p.mayContain ?? []).includes(restrictionName)
+                    );
+                    if (conflicts.length > 0) {
+                      alert(`לא ניתן להוסיף הגבלה "${restrictionName}" — ${conflicts.map((p) => p.name).join(", ")} מכיל/ים אלרגן זה`);
+                      return;
+                    }
+                  }
+                }
                 setLibRestrictions((prev) =>
-                  prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-                )
-              }
+                  prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+                );
+              }}
               onToggleTexture={(id) => setLibTextures((prev) => (prev.includes(id) ? [] : [id]))}
               onToggleMayContain={() => setLibShowMayContain((v) => !v)}
               onAddProduct={(p) => setSelectedProducts((prev) => [...prev, p])}
