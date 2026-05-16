@@ -98,7 +98,7 @@ const MealEditDrawer: React.FC<MealEditDrawerProps> = ({
         </div>
 
         {/* Left pane: product library */}
-        <div className="xl:w-[60%] flex flex-col border-r border-gray-100 overflow-hidden h-full">
+        <div className="xl:w-[60%] flex flex-col border-r pt-6 border-gray-100 overflow-hidden h-full">
           <ProductLibrary
             availableProducts={availableProducts}
             restrictionsData={restrictionsData}

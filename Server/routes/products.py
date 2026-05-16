@@ -2,6 +2,7 @@ import os
 import uuid
 from flask import Blueprint, jsonify, request
 from werkzeug.utils import secure_filename
+from sqlalchemy import text as sa_text
 from models import db, FoodItem
 from supabase import create_client, Client
 
@@ -103,6 +104,100 @@ def build_product_embedding_pipeline(data: dict) -> list[float]:
     embedding = get_embedding(semantic_text)
     return embedding
 
+def format_product(p) -> dict:
+    """Serialize a FoodItem ORM object to the standard API response dict."""
+    return {
+        "id": str(p.id),
+        "category": p.category_rel.name if p.category_rel else 'כללי',
+        "category_id": p.category_id,
+        "image": p.image_url,
+        "name": p.name,
+        "iddsi": p.iddsi,
+        "calories": p.calories,
+        "protein": p.protein,
+        "carbs": p.carbs,
+        "fat": p.fat,
+        "sugares": p.sugars,
+        "sodium": p.sodium,
+        "contains": p.contains,
+        "mayContain": p.may_contain,
+        "texture": p.texture_rel.name if p.texture_rel else None,
+        "texture_id": p.texture_id,
+        "properties": p.properties,
+        "company": p.company,
+        "textureNotes": p.texture_notes,
+        "allergyNotes": p.allergy_notes,
+        "forbiddenFor": p.forbidden_for,
+        "lastEditDate": p.updated_at.strftime('%Y-%m-%d %H:%M:%S') if p.updated_at else None,
+    }
+
+@products_bp.route('/api/products/<int:product_id>/similar', methods=['GET'])
+def similar_products(product_id):
+    """Return foods most similar to product_id by cosine distance on the 6D nutrition_vector."""
+    limit = min(int(request.args.get('limit', 6)), 20)
+    product = FoodItem.query.get_or_404(product_id)
+
+    if product.nutrition_vector is None:
+        return jsonify([])
+
+    vec_str = "[" + ",".join(str(v) for v in product.nutrition_vector) + "]"
+    rows = db.session.execute(
+        sa_text("""
+            SELECT id
+            FROM food_items
+            WHERE nutrition_vector IS NOT NULL
+              AND id != :exclude_id
+            ORDER BY nutrition_vector <=> CAST(:vec AS vector)
+            LIMIT :limit
+        """),
+        {"vec": vec_str, "exclude_id": product_id, "limit": limit}
+    ).fetchall()
+
+    ids = [row[0] for row in rows]
+    if not ids:
+        return jsonify([])
+
+    items = FoodItem.query.filter(FoodItem.id.in_(ids)).all()
+    by_id = {p.id: p for p in items}
+    ordered = [by_id[i] for i in ids if i in by_id]
+    return jsonify([format_product(p) for p in ordered])
+
+@products_bp.route('/api/products/balance-suggest', methods=['POST'])
+def balance_suggest():
+    """Given current meal totals and targets, return foods that best close the nutrient gap."""
+    body    = request.json or {}
+    totals  = body.get('current_totals', {})
+    targets = body.get('targets', {})
+    limit   = min(int(body.get('limit', 3)), 10)
+
+    # 'sugares' is the misspelled frontend field name; map to DB column 'sugars'
+    fields = ['calories', 'protein', 'carbs', 'fat', 'sugares', 'sodium']
+    target_arr  = [float(targets.get(f, 0)) for f in fields]
+    current_arr = [float(totals.get(f, 0))  for f in fields]
+
+    gap_norm = [
+        max(0.0, (t - c) / t) if t > 0 else 0.0
+        for t, c in zip(target_arr, current_arr)
+    ]
+    if sum(gap_norm) == 0:
+        return jsonify([])
+
+    all_products = FoodItem.query.all()
+    scored = []
+    for p in all_products:
+        vals = [p.calories or 0, p.protein or 0, p.carbs or 0,
+                p.fat or 0, p.sugars or 0, p.sodium or 0]
+        new_gap = [
+            max(0.0, gap_norm[i] - (vals[i] / target_arr[i])) if target_arr[i] > 0 else 0.0
+            for i in range(6)
+        ]
+        improvement = sum(gap_norm) - sum(new_gap)
+        if improvement > 0:
+            scored.append((improvement, p))
+
+    scored.sort(key=lambda x: -x[0])
+    return jsonify([format_product(p) for _, p in scored[:limit]])
+
 @products_bp.route('/api/products/ai-status', methods=['GET'])
 def ai_status():
     """Returns whether AI/semantic search features are enabled on this server."""
@@ -112,8 +207,6 @@ def ai_status():
 @products_bp.route('/api/products/semantic-search', methods=['POST'])
 def semantic_search():
     """Natural language semantic search: embeds the query and ranks products by cosine distance."""
-    from sqlalchemy import text as sa_text
-
     if os.environ.get("AI_ENABLED", "false").lower() != "true":
         return jsonify({"error": "AI features are not enabled"}), 503
 
@@ -176,31 +269,9 @@ def semantic_search():
         p = product_map.get(pid)
         if not p:
             continue
-        result.append({
-            "id": str(p.id),
-            "category": p.category_rel.name if p.category_rel else 'כללי',
-            "category_id": p.category_id,
-            "image": p.image_url,
-            "name": p.name,
-            "iddsi": p.iddsi,
-            "calories": p.calories,
-            "protein": p.protein,
-            "carbs": p.carbs,
-            "fat": p.fat,
-            "sugares": p.sugars,
-            "sodium": p.sodium,
-            "contains": p.contains,
-            "mayContain": p.may_contain,
-            "texture": p.texture_rel.name if p.texture_rel else None,
-            "texture_id": p.texture_id,
-            "properties": p.properties,
-            "company": p.company,
-            "textureNotes": p.texture_notes,
-            "allergyNotes": p.allergy_notes,
-            "forbiddenFor": p.forbidden_for,
-            "lastEditDate": p.updated_at.strftime('%Y-%m-%d %H:%M:%S') if p.updated_at else None,
-            "distance": id_to_distance[pid],
-        })
+        item = format_product(p)
+        item["distance"] = id_to_distance[pid]
+        result.append(item)
 
     return jsonify(result)
 
@@ -208,34 +279,7 @@ def semantic_search():
 def get_products():
     """Retrieves all food items and formats them for the frontend."""
     products = FoodItem.query.all()
-    result = []
-    for p in products:
-        category_name = p.category_rel.name if p.category_rel else 'כללי'
-        result.append({
-            "id": str(p.id),
-            "category": category_name,
-            "category_id": p.category_id,
-            "image": p.image_url,
-            "name": p.name,
-            "iddsi": p.iddsi,
-            "calories": p.calories,
-            "protein": p.protein,
-            "carbs": p.carbs,
-            "fat": p.fat,
-            "sugares": p.sugars,
-            "sodium": p.sodium,
-            "contains": p.contains,
-            "mayContain": p.may_contain,
-            "texture": p.texture_rel.name if p.texture_rel else None,
-            "texture_id": p.texture_id,
-            "properties": p.properties,
-            "company": p.company,
-            "textureNotes": p.texture_notes,
-            "allergyNotes": p.allergy_notes,
-            "forbiddenFor": p.forbidden_for,
-            "lastEditDate": p.updated_at.strftime('%Y-%m-%d %H:%M:%S') if p.updated_at else None
-        })
-    return jsonify(result)
+    return jsonify([format_product(p) for p in products])
 
 @products_bp.route('/api/upload', methods=['POST'])
 def upload_image():
