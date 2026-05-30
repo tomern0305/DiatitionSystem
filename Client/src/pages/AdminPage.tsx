@@ -30,6 +30,8 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
   const [embeddingLoading, setEmbeddingLoading] = useState(false);
   const [embeddingStatus, setEmbeddingStatus] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [aiEnabled, setAiEnabled] = useState(false);
+  const [zScoreEnabled, setZScoreEnabled] = useState(false);
+  const [zScoreLoading, setZScoreLoading] = useState(false);
 
   // Load users and AI flag once token is available
   useEffect(() => {
@@ -41,6 +43,10 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
     fetch(`${API}/api/products/ai-status`)
       .then((r) => r.json())
       .then((data) => setAiEnabled(data.ai_enabled === true))
+      .catch(() => {});
+    fetch(`${API}/api/system/settings`)
+      .then((r) => r.json())
+      .then((data) => setZScoreEnabled(data.z_score_check_enabled === "true"))
       .catch(() => {});
   }, [token]);
 
@@ -136,6 +142,20 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
     }
   };
 
+  const handleToggleZScore = async () => {
+    setZScoreLoading(true);
+    const newVal = !zScoreEnabled;
+    try {
+      await authFetch(`${API}/api/system/settings`, {
+        method: "PATCH",
+        body: JSON.stringify({ z_score_check_enabled: newVal }),
+      });
+      setZScoreEnabled(newVal);
+    } finally {
+      setZScoreLoading(false);
+    }
+  };
+
   const handleAddUser = async (username: string, tempPassword: string) => {
     const res = await authFetch(`${API}/api/users`, {
       method: "POST",
@@ -191,6 +211,24 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
             </p>
           )}
         </div>}
+
+        {/* Z-score outlier detection toggle */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="font-bold text-gray-800 text-lg mb-1">בדיקת חריגות תזונתיות</h2>
+              <p className="text-sm text-gray-400">מזהה ערכים חריגים סטטיסטית בעת הוספת מוצר (Z-score). פועל לאחר 20 מוצרים במערכת.</p>
+            </div>
+            <button
+              onClick={handleToggleZScore}
+              disabled={zScoreLoading}
+              className={`relative w-12 h-6 rounded-full transition-colors shrink-0 disabled:opacity-50 ${zScoreEnabled ? "bg-orange-500" : "bg-gray-300"}`}
+              title={zScoreEnabled ? "לחץ לכיבוי" : "לחץ להפעלה"}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${zScoreEnabled ? "translate-x-6" : ""}`} />
+            </button>
+          </div>
+        </div>
 
         {/* Backup & Restore */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">

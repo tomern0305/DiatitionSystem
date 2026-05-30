@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { SensitivityData, CategoryData, TextureData } from "../../types";
+import OutlierWarningPopup, { type OutlierFlag } from "../products/OutlierWarningPopup";
 
 interface AddProductFormProps {
   onProductAdded: () => void;
@@ -35,6 +36,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   const [sensitivities, setSensitivities] = useState<SensitivityData[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [outlierFlags, setOutlierFlags] = useState<OutlierFlag[] | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -149,62 +151,59 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const doSave = async () => {
+    setOutlierFlags(null);
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/products`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      setFormData({
+        name: "", category_id: categories.length > 0 ? categories[0].id : 0,
+        image: "", iddsi: 0, calories: 0, protein: 0, carbs: 0, fat: 0,
+        sugares: 0, sodium: 0, contains: [], mayContain: [], texture_id: 0,
+        company: "", textureNotes: "", allergyNotes: "", forbiddenFor: "",
+      });
+      onProductAdded();
+    } catch (err: any) {
+      alert("Error adding product: " + err);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
 
-    // Validation
-    if (!formData.name.trim()) {
-      setValidationError("נא למלא את שם המוצר.");
-      return;
-    }
-    if (!formData.category_id || formData.category_id === 0) {
-      setValidationError("נא לבחור קטגוריה למוצר.");
-      return;
-    }
-    if (!formData.texture_id || formData.texture_id === 0) {
-      setValidationError(
-        "נא לבחור מרקם מנה (חובה). לא ניתן לשמור ללא בחירת מרקם.",
-      );
-      return;
-    }
+    if (!formData.name.trim()) { setValidationError("נא למלא את שם המוצר."); return; }
+    if (!formData.category_id) { setValidationError("נא לבחור קטגוריה למוצר."); return; }
+    if (!formData.texture_id)  { setValidationError("נא לבחור מרקם מנה (חובה). לא ניתן לשמור ללא בחירת מרקם."); return; }
 
-    fetch(`${import.meta.env.VITE_API_URL}/api/products`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    })
-      .then((res) => res.json())
-      .then(() => {
-        setFormData({
-          name: "",
-          category_id: categories.length > 0 ? categories[0].id : 0,
-          image: "",
-          iddsi: 0,
-          calories: 0,
-          protein: 0,
-          carbs: 0,
-          fat: 0,
-          sugares: 0,
-          sodium: 0,
-          contains: [],
-          mayContain: [],
-          texture_id: 0,
-          company: "",
-          textureNotes: "",
-          allergyNotes: "",
-          forbiddenFor: "",
-        });
-        onProductAdded();
-      })
-      .catch((err) => {
-        alert("Error adding product: " + err);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/check-outlier`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
+      const result = await res.json();
+      if (!result.skip && result.flagged?.length > 0) {
+        setOutlierFlags(result.flagged);
+        return;
+      }
+    } catch { /* if check fails, proceed anyway */ }
+
+    await doSave();
   };
 
   return (
+    <>
+    {outlierFlags && (
+      <OutlierWarningPopup
+        flags={outlierFlags}
+        onCancel={() => setOutlierFlags(null)}
+        onConfirm={doSave}
+      />
+    )}
     <div className="bg-white p-6 rounded-xl shadow-md mb-8 border border-gray-100">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">פרטי מוצר חדש</h2>
@@ -580,6 +579,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         </div>
       </form>
     </div>
+    </>
   );
 };
 

@@ -59,6 +59,46 @@ def backfill_embeddings():
     return jsonify({"message": f"Backfill complete.", "updated": updated, "errors": errors}), 200
 
 
+def _ensure_settings_table():
+    """Creates system_settings table if it doesn't exist yet."""
+    db.session.execute(text("""
+        CREATE TABLE IF NOT EXISTS system_settings (
+            key VARCHAR(100) PRIMARY KEY,
+            value TEXT NOT NULL DEFAULT ''
+        )
+    """))
+    db.session.commit()
+
+
+@system_bp.route('/api/system/settings', methods=['GET'])
+def get_settings():
+    """Returns all system settings as a key-value dict."""
+    try:
+        _ensure_settings_table()
+        rows = db.session.execute(text("SELECT key, value FROM system_settings")).fetchall()
+        return jsonify({row[0]: row[1] for row in rows})
+    except Exception:
+        return jsonify({})
+
+
+@system_bp.route('/api/system/settings', methods=['PATCH'])
+def update_settings():
+    """Updates one or more system settings (admin only)."""
+    if (err := _require_admin()): return err
+    _ensure_settings_table()
+    data = request.json or {}
+    for key, value in data.items():
+        db.session.execute(
+            text("""
+                INSERT INTO system_settings (key, value) VALUES (:key, :value)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+            """),
+            {"key": key, "value": str(value).lower()}
+        )
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
 @system_bp.route('/uploads/<filename>')
 def uploaded_file(filename):
     """Serves locally uploaded files (legacy use-case)."""
@@ -114,6 +154,16 @@ def run_migrations():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """))
+        db.session.execute(text("""
+            CREATE TABLE IF NOT EXISTS system_settings (
+                key VARCHAR(100) PRIMARY KEY,
+                value TEXT NOT NULL DEFAULT ''
+            )
+        """))
+        db.session.execute(text(
+            "INSERT INTO system_settings (key, value) VALUES ('z_score_check_enabled', 'false') "
+            "ON CONFLICT (key) DO NOTHING"
+        ))
         db.session.commit()
         return jsonify({"message": "Database migrations completed successfully!"}), 200
     except Exception as e:

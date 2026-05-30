@@ -275,6 +275,48 @@ def semantic_search():
 
     return jsonify(result)
 
+@products_bp.route('/api/products/check-outlier', methods=['POST'])
+def check_outlier():
+    """Z-score outlier detection on submitted nutrition values; skips if disabled or < 20 products."""
+    import numpy as np
+    body = request.json or {}
+
+    try:
+        row = db.session.execute(
+            sa_text("SELECT value FROM system_settings WHERE key = 'z_score_check_enabled'")
+        ).fetchone()
+        if not row or row[0] != 'true':
+            return jsonify({"skip": True})
+    except Exception:
+        return jsonify({"skip": True})
+
+    all_products = FoodItem.query.all()
+    if len(all_products) < 20:
+        return jsonify({"skip": True})
+
+    fields = [
+        ('calories', 'calories'), ('protein', 'protein'), ('carbs', 'carbs'),
+        ('fat', 'fat'), ('sugares', 'sugars'), ('sodium', 'sodium'),
+    ]
+    matrix = np.array(
+        [[float(getattr(p, db_f) or 0) for _, db_f in fields] for p in all_products],
+        dtype=float,
+    )
+    means = matrix.mean(axis=0)
+    stds  = matrix.std(axis=0)
+    stds[stds == 0] = 1.0
+
+    product_vec = np.array([float(body.get(api_f, 0)) for api_f, _ in fields])
+    z_scores = (product_vec - means) / stds
+
+    flagged = [
+        {"field": api_f, "z": round(float(z_scores[i]), 1), "mean": round(float(means[i]), 1)}
+        for i, (api_f, _) in enumerate(fields)
+        if abs(z_scores[i]) > 3.0
+    ]
+    return jsonify({"skip": False, "flagged": flagged})
+
+
 @products_bp.route('/api/products', methods=['GET'])
 def get_products():
     """Retrieves all food items and formats them for the frontend."""
