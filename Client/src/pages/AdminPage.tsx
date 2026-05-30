@@ -222,7 +222,7 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
             <button
               onClick={handleToggleZScore}
               disabled={zScoreLoading}
-              className={`relative w-12 h-6 rounded-full transition-colors shrink-0 disabled:opacity-50 ${zScoreEnabled ? "bg-orange-500" : "bg-gray-300"}`}
+              className={`relative w-12 h-6 rounded-full transition-colors shrink-0 disabled:opacity-50 ${zScoreEnabled ? "bg-green-500" : "bg-red-300"}`}
               title={zScoreEnabled ? "לחץ לכיבוי" : "לחץ להפעלה"}
             >
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${zScoreEnabled ? "translate-x-6" : ""}`} />
