@@ -11,3 +11,5 @@ pandas
 requests
 PyJWT
 bcrypt
+openpyxl
+numpy

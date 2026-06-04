@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import TopBar from "../components/layout/TopBar";
 import UserTable from "../components/admin/UserTable";
 import type { UserData } from "../components/admin/UserTable";
@@ -24,13 +24,30 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [error, setError] = useState("");
 
-  // Load users once token is available; re-runs if token changes
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupStatus, setBackupStatus] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  const [embeddingLoading, setEmbeddingLoading] = useState(false);
+  const [embeddingStatus, setEmbeddingStatus] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [zScoreEnabled, setZScoreEnabled] = useState(false);
+  const [zScoreLoading, setZScoreLoading] = useState(false);
+
+  // Load users and AI flag once token is available
   useEffect(() => {
     if (!token) return;
     authFetch(`${API}/api/users`)
       .then((r) => r.json())
       .then((data) => setUsers(Array.isArray(data) ? data : []))
       .catch(() => setError("שגיאה בטעינת המשתמשים"));
+    fetch(`${API}/api/products/ai-status`)
+      .then((r) => r.json())
+      .then((data) => setAiEnabled(data.ai_enabled === true))
+      .catch(() => {});
+    fetch(`${API}/api/system/settings`)
+      .then((r) => r.json())
+      .then((data) => setZScoreEnabled(data.z_score_check_enabled === "true"))
+      .catch(() => {});
   }, [token]);
 
   const handleRoleChange = async (userId: number, newRole: string) => {
@@ -64,6 +81,81 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
     }
   };
 
+  const handleExport = async () => {
+    setBackupLoading(true);
+    setBackupStatus(null);
+    try {
+      const res = await authFetch(`${API}/api/system/export`);
+      if (!res.ok) throw new Error("ייצוא נכשל");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "database_backup.zip";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      setBackupStatus({ text: "גיבוי יוצא בהצלחה!", type: "success" });
+    } catch (err: any) {
+      setBackupStatus({ text: `שגיאה בייצוא: ${err.message}`, type: "error" });
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    setBackupLoading(true);
+    setBackupStatus(null);
+    try {
+      const res = await fetch(`${API}/api/system/import`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "ייבוא נכשל");
+      setBackupStatus({ text: data.message, type: "success" });
+    } catch (err: any) {
+      setBackupStatus({ text: `שגיאה בייבוא: ${err.message}`, type: "error" });
+    } finally {
+      setBackupLoading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleBackfillEmbeddings = async () => {
+    setEmbeddingLoading(true);
+    setEmbeddingStatus(null);
+    try {
+      const res = await authFetch(`${API}/api/system/backfill-embeddings`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "שגיאה");
+      setEmbeddingStatus({ text: `${data.message} עודכנו: ${data.updated} מוצרים.`, type: "success" });
+    } catch (err: any) {
+      setEmbeddingStatus({ text: `שגיאה: ${err.message}`, type: "error" });
+    } finally {
+      setEmbeddingLoading(false);
+    }
+  };
+
+  const handleToggleZScore = async () => {
+    setZScoreLoading(true);
+    const newVal = !zScoreEnabled;
+    try {
+      await authFetch(`${API}/api/system/settings`, {
+        method: "PATCH",
+        body: JSON.stringify({ z_score_check_enabled: newVal }),
+      });
+      setZScoreEnabled(newVal);
+    } finally {
+      setZScoreLoading(false);
+    }
+  };
+
   const handleAddUser = async (username: string, tempPassword: string) => {
     const res = await authFetch(`${API}/api/users`, {
       method: "POST",
@@ -78,7 +170,7 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
   return (
     <div className="min-h-screen bg-gray-50 p-6 sm:p-8 md:p-10 relative" dir="rtl">
       <div className="w-full mx-auto space-y-8">
-        <TopBar title="ניהול משתמשים" setIsSideMenuOpen={setIsSideMenuOpen}>
+        <TopBar title="ניהול" setIsSideMenuOpen={setIsSideMenuOpen}>
           <button
             onClick={() => setIsAddUserOpen(true)}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-[0_4px_14px_rgba(37,99,235,0.25)] transition-all flex items-center justify-center gap-2 cursor-pointer"
@@ -98,6 +190,84 @@ const AdminPage = ({ setIsSideMenuOpen }: AdminPageProps) => {
           onRoleChange={handleRoleChange}
           onDelete={handleDelete}
         />
+
+        {/* AI Embeddings — only shown when AI_ENABLED=true on server */}
+        {aiEnabled && <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="font-bold text-gray-800 text-lg mb-1">הטמעות AI</h2>
+          <p className="text-sm text-gray-400 mb-4">מחשב מחדש את וקטור OpenAI לכל מוצר שעדיין לא חושב</p>
+          <button
+            onClick={handleBackfillEmbeddings}
+            disabled={embeddingLoading}
+            className="flex items-center gap-2 bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold py-2.5 px-4 rounded-xl transition-all shadow-sm disabled:opacity-50"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V15a1 1 0 0 0-2 0v1.93A8 8 0 0 1 4.07 11H6a1 1 0 0 0 0-2H4.07A8 8 0 0 1 11 4.07V6a1 1 0 0 0 2 0V4.07A8 8 0 0 1 19.93 11H18a1 1 0 0 0 0 2h1.93A8 8 0 0 1 13 16.93z" />
+            </svg>
+            {embeddingLoading ? "מחשב..." : "חשב הטמעות חסרות"}
+          </button>
+          {embeddingStatus && (
+            <p className={`mt-3 text-sm font-medium ${embeddingStatus.type === "success" ? "text-green-600" : "text-red-500"}`}>
+              {embeddingStatus.text}
+            </p>
+          )}
+        </div>}
+
+        {/* Z-score outlier detection toggle */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="font-bold text-gray-800 text-lg mb-1">בדיקת חריגות תזונתיות</h2>
+              <p className="text-sm text-gray-400">מזהה ערכים חריגים סטטיסטית בעת הוספת מוצר (Z-score). פועל לאחר 20 מוצרים במערכת.</p>
+            </div>
+            <button
+              onClick={handleToggleZScore}
+              disabled={zScoreLoading}
+              className={`relative w-12 h-6 rounded-full transition-colors shrink-0 disabled:opacity-50 ${zScoreEnabled ? "bg-green-500" : "bg-red-300"}`}
+              title={zScoreEnabled ? "לחץ לכיבוי" : "לחץ להפעלה"}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${zScoreEnabled ? "translate-x-6" : ""}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Backup & Restore */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="font-bold text-gray-800 text-lg mb-1">גיבוי ושחזור מערכת</h2>
+          <p className="text-sm text-gray-400 mb-4">מייצא קובץ Excel אחד עם כל הטבלאות ותיקיית תמונות בתוך ZIP</p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleExport}
+              disabled={backupLoading}
+              className="flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold py-2.5 px-4 rounded-xl transition-all shadow-sm disabled:opacity-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path fillRule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" clipRule="evenodd" />
+              </svg>
+              {backupLoading ? "מעבד..." : "ייצוא גיבוי"}
+            </button>
+
+            <div className="relative">
+              <input
+                type="file"
+                accept=".zip"
+                onChange={handleImport}
+                disabled={backupLoading}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+              />
+              <div className={`flex items-center gap-2 bg-blue-100 text-blue-700 font-semibold py-2.5 px-4 rounded-xl shadow-sm pointer-events-none ${backupLoading ? "opacity-50" : "hover:bg-blue-200"}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                  <path fillRule="evenodd" d="M10.5 3.75a6 6 0 0 0-5.98 6.496A5.25 5.25 0 0 0 6.75 20.25H18a4.5 4.5 0 0 0 2.206-8.423 3.75 3.75 0 0 0-4.133-4.303A6.001 6.001 0 0 0 10.5 3.75Zm2.03 5.47a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v4.94a.75.75 0 0 0 1.5 0v-4.94l1.72 1.72a.75.75 0 1 0 1.06-1.06l-3-3Z" clipRule="evenodd" />
+                </svg>
+                ייבוא גיבוי
+              </div>
+            </div>
+          </div>
+          {backupStatus && (
+            <p className={`mt-3 text-sm font-medium ${backupStatus.type === "success" ? "text-green-600" : "text-red-500"}`}>
+              {backupStatus.text}
+            </p>
+          )}
+        </div>
       </div>
 
       {resetTarget && (

@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
-from models import db, Meal, FoodItem
+from models import db, Meal, FoodItem, User
+from routes.auth import verify_token
 
 meals_bp = Blueprint('meals_bp', __name__)
 
@@ -27,12 +28,30 @@ def _meal_to_dict(meal: Meal) -> dict:
         },
         "created_at": meal.created_at.strftime('%Y-%m-%d %H:%M:%S') if meal.created_at else None,
         "updated_at": meal.updated_at.strftime('%Y-%m-%d %H:%M:%S') if meal.updated_at else None,
+        "created_by": meal.created_by,
+        "created_by_username": User.query.get(meal.created_by).username if meal.created_by else None,
+        "is_global":  meal.is_global,
     }
 
 @meals_bp.route('/api/meals', methods=['GET'])
 def get_meals():
-    """Retrieves all meals ordered by most recent first."""
-    meals = Meal.query.order_by(Meal.created_at.desc()).all()
+    """Retrieves meals visible to the current user based on their role."""
+    payload = verify_token(request)
+    if not payload:
+        return jsonify({"error": "לא מורשה"}), 401
+
+    role = payload.get('role')
+    user_id = payload.get('id')
+
+    if role == 'admin':
+        meals = Meal.query.order_by(Meal.created_at.desc()).all()
+    elif role == 'dietitian':
+        meals = Meal.query.filter(
+            (Meal.is_global == True) | (Meal.created_by == user_id)
+        ).order_by(Meal.created_at.desc()).all()
+    else:
+        meals = Meal.query.filter(Meal.is_global == True).order_by(Meal.created_at.desc()).all()
+
     return jsonify([_meal_to_dict(m) for m in meals])
 
 @meals_bp.route('/api/meals/<int:meal_id>', methods=['GET'])
@@ -78,6 +97,10 @@ def create_meal():
         "filters":     {restriction_ids, texture_ids, show_may_contain}
     }
     """
+    payload = verify_token(request)
+    if not payload:
+        return jsonify({"error": "לא מורשה"}), 401
+
     data = request.json
 
     name = data.get('name', '').strip()
@@ -86,6 +109,9 @@ def create_meal():
 
     nutrition = data.get('nutrition', {})
     filters   = data.get('filters',   {})
+
+    # Admins create global meals; dietitians create private (temp) meals
+    is_global = payload.get('role') == 'admin'
 
     new_meal = Meal(
         name        = name,
@@ -101,6 +127,8 @@ def create_meal():
         filter_restriction_ids  = filters.get('restriction_ids',  []),
         filter_texture_ids      = filters.get('texture_ids',      []),
         filter_show_may_contain = filters.get('show_may_contain', False),
+        created_by = payload.get('id'),
+        is_global  = is_global,
     )
 
     try:
@@ -113,10 +141,17 @@ def create_meal():
 
 @meals_bp.route('/api/meals/<int:meal_id>', methods=['DELETE'])
 def delete_meal(meal_id):
-    """Deletes a meal by its ID."""
+    """Deletes a meal by its ID. Only the creator or an admin may delete."""
+    payload = verify_token(request)
+    if not payload:
+        return jsonify({"error": "לא מורשה"}), 401
+
     meal = Meal.query.get(meal_id)
     if not meal:
         return jsonify({"error": "Meal not found"}), 404
+
+    if payload.get('role') != 'admin' and meal.created_by != payload.get('id'):
+        return jsonify({"error": "גישה נדחתה"}), 403
 
     try:
         db.session.delete(meal)
@@ -130,12 +165,18 @@ def delete_meal(meal_id):
 def update_meal(meal_id):
     """
     Updates an existing meal's details, products, nutrition snapshot, and filter state.
-
-    Accepts the same JSON body as POST /api/meals.
+    Only the creator or an admin may update.
     """
+    payload = verify_token(request)
+    if not payload:
+        return jsonify({"error": "לא מורשה"}), 401
+
     meal = Meal.query.get(meal_id)
     if not meal:
         return jsonify({"error": "Meal not found"}), 404
+
+    if payload.get('role') != 'admin' and meal.created_by != payload.get('id'):
+        return jsonify({"error": "גישה נדחתה"}), 403
 
     data = request.json
     nutrition = data.get('nutrition', {})

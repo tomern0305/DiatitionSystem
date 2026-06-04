@@ -2,7 +2,8 @@
 
 from flask_sqlalchemy import SQLAlchemy
 from pgvector.sqlalchemy import Vector
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Computed, Index
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from datetime import datetime
 
 db = SQLAlchemy()
@@ -85,6 +86,20 @@ class FoodItem(db.Model):
     # וקטור גדול בגודל 1536 עבור חיפוש סמנטי בשפה טבעית (OpenAI)
     openai_embedding = db.Column(Vector(1536))
 
+    # עמודה מחושבת לחיפוש טקסט מלא (PostgreSQL full-text search)
+    search_vector = db.Column(
+        TSVECTOR,
+        Computed(
+            "to_tsvector('simple', coalesce(name,'') || ' ' || coalesce(company,'') || ' ' ||"
+            " coalesce(texture_notes,'') || ' ' || coalesce(allergy_notes,'') || ' ' || coalesce(forbidden_for,''))",
+            persisted=True,
+        ),
+    )
+
+    __table_args__ = (
+        Index('food_items_search_vector_gin', 'search_vector', postgresql_using='gin'),
+    )
+
     # --- בקרה ומעקב (Audit) ---
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -133,6 +148,10 @@ class Meal(db.Model):
     filter_texture_ids     = db.Column(JSONB, default=[])
     # Whether "may contain" products were included in the library at save time
     filter_show_may_contain = db.Column(db.Boolean, default=False)
+
+    # Ownership & visibility
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    is_global  = db.Column(db.Boolean, nullable=False, default=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
