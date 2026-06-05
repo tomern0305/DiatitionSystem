@@ -78,4 +78,7 @@ export interface MealData {
   };
   created_at: string;
   updated_at: string;
+  created_by: number | null;
+  created_by_username: string | null;
+  is_global: boolean;
 }

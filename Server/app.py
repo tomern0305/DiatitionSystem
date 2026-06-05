@@ -56,6 +56,16 @@ with app.app_context():
     db.create_all()
     print("Database tables created successfully!")
 
+    # Apply any column-level migrations that db.create_all() won't handle
+    migrations = [
+        'ALTER TABLE food_items ADD COLUMN IF NOT EXISTS texture_id INTEGER REFERENCES textures(id)',
+        'ALTER TABLE meals ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id)',
+        'ALTER TABLE meals ADD COLUMN IF NOT EXISTS is_global BOOLEAN NOT NULL DEFAULT TRUE',
+    ]
+    for sql in migrations:
+        db.session.execute(text(sql))
+    db.session.commit()
+
     # Seed a default admin user if the users table is empty
     from models import User
     if User.query.count() == 0:

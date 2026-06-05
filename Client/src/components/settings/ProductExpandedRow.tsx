@@ -5,6 +5,7 @@ import type {
   SensitivityData,
   TextureData,
 } from "../../types";
+import OutlierWarningPopup, { type OutlierFlag } from "../products/OutlierWarningPopup";
 
 interface ProductExpandedRowProps {
   product: ProductData;
@@ -48,6 +49,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
   const [saving, setSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [outlierFlags, setOutlierFlags] = useState<OutlierFlag[] | null>(null);
 
   useEffect(() => {
     if (isEditing) {
@@ -154,25 +156,8 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
     }
   };
 
-  const handleSave = async () => {
-    setValidationError(null);
-
-    // Validation
-    if (!formData.name.trim()) {
-      setValidationError("נא למלא את שם המוצר.");
-      return;
-    }
-    if (!formData.category_id || formData.category_id === 0) {
-      setValidationError("נא לבחור קטגוריה למוצר.");
-      return;
-    }
-    if (!formData.texture_id || formData.texture_id === 0) {
-      setValidationError(
-        "נא לבחור מרקם מנה (חובה). לא ניתן לשמור ללא בחירת מרקם.",
-      );
-      return;
-    }
-
+  const doSave = async () => {
+    setOutlierFlags(null);
     setSaving(true);
     try {
       await onSave(product.id, formData);
@@ -182,6 +167,29 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSave = async () => {
+    setValidationError(null);
+
+    if (!formData.name.trim()) { setValidationError("נא למלא את שם המוצר."); return; }
+    if (!formData.category_id) { setValidationError("נא לבחור קטגוריה למוצר."); return; }
+    if (!formData.texture_id)  { setValidationError("נא לבחור מרקם מנה (חובה). לא ניתן לשמור ללא בחירת מרקם."); return; }
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/check-outlier`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const result = await res.json();
+      if (!result.skip && result.flagged?.length > 0) {
+        setOutlierFlags(result.flagged);
+        return;
+      }
+    } catch { /* if check fails, proceed anyway */ }
+
+    await doSave();
   };
 
   const handleDelete = async () => {
@@ -333,6 +341,14 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
   }
 
   return (
+    <>
+    {outlierFlags && (
+      <OutlierWarningPopup
+        flags={outlierFlags}
+        onCancel={() => setOutlierFlags(null)}
+        onConfirm={doSave}
+      />
+    )}
     <div className="p-6 bg-white border border-blue-100 m-4 rounded-2xl shadow-sm">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold text-blue-900">
@@ -706,6 +722,7 @@ const ProductExpandedRow: React.FC<ProductExpandedRowProps> = ({
         </button>
       </div>
     </div>
+    </>
   );
 };
 
