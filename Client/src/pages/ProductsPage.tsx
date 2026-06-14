@@ -9,6 +9,7 @@ import useProductCatalog from "../hooks/useProductCatalog";
 import useProductFilters from "../hooks/useProductFilters";
 import useAiEnabled from "../hooks/useAiEnabled";
 import useSemanticSearch from "../hooks/useSemanticSearch";
+import { useAuth } from "../context/AuthContext";
 import type { ProductData } from "../types";
 
 interface ProductsPageProps {
@@ -22,7 +23,8 @@ const ProductsPage = ({ setIsSideMenuOpen }: ProductsPageProps) => {
   const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null);
   const [similarAnchor, setSimilarAnchor] = useState<{ product: ProductData; rect: DOMRect } | null>(null);
 
-  const { loading, error, products, restrictionsData, texturesData, getCatalog, getSuggestedMeals } = useProductCatalog(true);
+  const { authFetch } = useAuth();
+  const { loading, error, products, restrictionsData, texturesData, getCatalog, getSuggestedMeals } = useProductCatalog(true, authFetch);
   const filters = useProductFilters();
   const aiEnabled = useAiEnabled();
   const { results: aiResults, loading: aiLoading } = useSemanticSearch(searchTerm, aiMode);

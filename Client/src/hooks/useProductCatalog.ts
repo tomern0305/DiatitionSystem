@@ -3,6 +3,8 @@ import type { ProductData, CategoryData, RestrictionsData, TexturesData, MealDat
 
 const API = import.meta.env.VITE_API_URL;
 
+type AuthFetch = (url: string, init?: RequestInit) => Promise<Response>;
+
 export interface ProductCatalog {
   loading: boolean;
   error: string | null;
@@ -20,7 +22,7 @@ export interface ProductCatalog {
   getSuggestedMeals: (selectedRestrictions: number[], selectedTextures: number[]) => MealData[];
 }
 
-const useProductCatalog = (fetchMeals = false): ProductCatalog => {
+const useProductCatalog = (fetchMeals = false, authFetch?: AuthFetch): ProductCatalog => {
   const [products, setProducts] = useState<ProductData[]>([]);
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [restrictionsData, setRestrictionsData] = useState<RestrictionsData[]>([]);
@@ -36,8 +38,8 @@ const useProductCatalog = (fetchMeals = false): ProductCatalog => {
       fetch(`${API}/api/sensitivities`).then((r) => { if (!r.ok) throw new Error("Failed to fetch sensitivities"); return r.json(); }),
       fetch(`${API}/api/texture`).then((r) => { if (!r.ok) throw new Error("Failed to fetch textures"); return r.json(); }),
     ];
-    if (fetchMeals) {
-      requests.push(fetch(`${API}/api/meals`).then((r) => (r.ok ? r.json() : [])).catch(() => []));
+    if (fetchMeals && authFetch) {
+      requests.push(authFetch(`${API}/api/meals`).then((r) => (r.ok ? r.json() : [])).catch(() => []));
     }
 
     Promise.all(requests)
@@ -53,7 +55,7 @@ const useProductCatalog = (fetchMeals = false): ProductCatalog => {
         setError(err.message);
         setLoading(false);
       });
-  }, [fetchMeals]);
+  }, [fetchMeals, authFetch]);
 
   const getCatalog = (searchTerm: string, sortBy: string) => {
     const filtered = products.filter(
