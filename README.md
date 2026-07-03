@@ -11,25 +11,30 @@ A hospital dietitian management system for managing food products, meals, and st
 | Database | PostgreSQL (Docker) with pgvector |
 | Storage | Supabase (images) |
 
-## Project Structure
+## System Layout
+
+The repository is organized by concern — each top-level directory has a single goal:
 
 ```
 DiatitionSystem/
-├── Client/        # React frontend
-│   └── src/
-│       ├── pages/
-│       ├── components/
-│       └── context/
-└── Server/        # Flask backend
-    ├── routes/
-    ├── models.py
-    └── scripts/
+├── Client/                     # Production web app — React frontend (products, meals, settings, admin)
+├── Server/                     # REST API — Flask backend: business logic, DB models, and AI/ML endpoints
+├── Data Base/                  # Database setup — PostgreSQL via Docker (compose file + seed backup)
+├── Docs/                       # Project documentation — requirements, design docs, literature review, presentations
+├── MachineLearning/            # ML exploration — notebooks and datasets for nutrition clustering & KNN similarity
+├── POC-NaturalLanguageSearch/  # Early-stage proof-of-concept — where we tried natural-language (NLP) product search
+└── Prototype/                  # Early-stage prototype of the app, built before the current Client/Server
 ```
+
+**Active** — `Client/`, `Server/`, and `Data Base/` run the live system, with `MachineLearning/` and `Docs/` supporting it.
+
+**Early stages** — `POC-NaturalLanguageSearch/` and `Prototype/` are from the early stages of the project and are kept for reference: the NLP search was first tried in the POC, and `Prototype/` was an earlier version of the app.
 
 ## Getting Started
 
 ### 1. Database
 ```bash
+cd "Data Base"
 docker-compose up -d
 ```
 

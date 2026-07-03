@@ -4,6 +4,7 @@ from flask import Blueprint, jsonify, request
 from werkzeug.utils import secure_filename
 from sqlalchemy import text as sa_text
 from models import db, FoodItem
+from nutrition_scaler import rank_similar
 from supabase import create_client, Client
 
 from openai import OpenAI
@@ -133,33 +134,16 @@ def format_product(p) -> dict:
 
 @products_bp.route('/api/products/<int:product_id>/similar', methods=['GET'])
 def similar_products(product_id):
-    """Return foods most similar to product_id by cosine distance on the 6D nutrition_vector."""
+    """Return foods most similar to product_id by cosine similarity on the StandardScaled 6-nutrient
+    vector. Scaling is applied at query time (nothing scaled is stored), so every nutrient weighs
+    equally instead of sodium & calories dominating the raw cosine."""
     limit = min(int(request.args.get('limit', 6)), 20)
     product = FoodItem.query.get_or_404(product_id)
 
-    if product.nutrition_vector is None:
-        return jsonify([])
-
-    vec_str = "[" + ",".join(str(v) for v in product.nutrition_vector) + "]"
-    rows = db.session.execute(
-        sa_text("""
-            SELECT id
-            FROM food_items
-            WHERE nutrition_vector IS NOT NULL
-              AND id != :exclude_id
-            ORDER BY nutrition_vector <=> CAST(:vec AS vector)
-            LIMIT :limit
-        """),
-        {"vec": vec_str, "exclude_id": product_id, "limit": limit}
-    ).fetchall()
-
-    ids = [row[0] for row in rows]
-    if not ids:
-        return jsonify([])
-
-    items = FoodItem.query.filter(FoodItem.id.in_(ids)).all()
-    by_id = {p.id: p for p in items}
-    ordered = [by_id[i] for i in ids if i in by_id]
+    # Candidate pool = every other product; nutrients are read live from the columns and
+    # standard-scaled per request (see nutrition_scaler.rank_similar).
+    candidates = FoodItem.query.filter(FoodItem.id != product_id).all()
+    ordered = rank_similar(product, candidates, limit)
     return jsonify([format_product(p) for p in ordered])
 
 @products_bp.route('/api/products/balance-suggest', methods=['POST'])
