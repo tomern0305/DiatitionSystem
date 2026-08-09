@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import AddDietForm from "./AddDietForm";
 import DietRow from "./DietRow";
+import DeleteVariableDialog from "./DeleteVariableDialog";
+import { useVariableUsage } from "../../hooks/useVariableUsage";
 import Toast from "../layout/Toast";
 import type { ToastType } from "../layout/Toast";
 import type { DietData } from "../../types";
@@ -36,9 +38,14 @@ const DietsTableSection = () => {
       });
   };
 
+  // Usage counts + guarded delete flow (dialog replaces window.confirm)
+  const del = useVariableUsage("diets", () => fetchDiets(false));
+
+  const { fetchUsage } = del;
   useEffect(() => {
     fetchDiets();
-  }, []);
+    fetchUsage();
+  }, [fetchUsage]);
 
   const fetchDietsTable = (showLoader: boolean = true) => {
     if (showLoader) setIsDownloadingDietsTable(true);
@@ -138,25 +145,6 @@ const DietsTableSection = () => {
       fetchDiets(false);
     } catch (err: any) {
       alert(`שגיאה בעדכון דיאטה: ${err.message}`);
-    }
-  };
-
-  const handleDeleteDiet = async (id: number) => {
-    if (!window.confirm("האם אתה בטוח שברצונך למחוק דיאטה זו?")) return;
-
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/diets/${id}`,
-        {
-          method: "DELETE",
-        },
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to delete diet");
-
-      fetchDiets(false);
-    } catch (err: any) {
-      alert(`לא ניתן למחוק: ${err.message}`);
     }
   };
 
@@ -331,6 +319,9 @@ const DietsTableSection = () => {
               <th className="p-4 font-bold text-gray-600 text-sm w-full">
                 שם דיאטה
               </th>
+              <th className="p-4 font-bold text-gray-600 text-sm text-center whitespace-nowrap">
+                בשימוש
+              </th>
               <th className="p-4 font-bold text-gray-600 text-sm text-center">
                 פעולות
               </th>
@@ -341,13 +332,14 @@ const DietsTableSection = () => {
               <DietRow
                 key={diet.id}
                 diet={diet}
+                usage={del.getUsage(diet.id)}
                 onEdit={handleEditDietSubmit}
-                onDelete={handleDeleteDiet}
+                onDelete={del.requestDelete}
               />
             ))}
             {diets.length === 0 && (
               <tr>
-                <td colSpan={2} className="p-8 text-center text-gray-500">
+                <td colSpan={3} className="p-8 text-center text-gray-500">
                   אין דיאטות לבחירה.
                 </td>
               </tr>
@@ -355,6 +347,18 @@ const DietsTableSection = () => {
           </tbody>
         </table>
       </div>
+
+      {del.pending && (
+        <DeleteVariableDialog
+          itemName={del.pending.name}
+          kindLabel="דיאטה"
+          usage={del.pendingUsage}
+          isSubmitting={del.isDeleting}
+          error={del.error}
+          onCancel={del.cancelDelete}
+          onConfirm={del.confirmDelete}
+        />
+      )}
     </div>
   );
 };

@@ -1,14 +1,17 @@
 import React, { useState } from "react";
-import type { SensitivityData } from "../../types";
+import UsageBadge from "./UsageBadge";
+import type { SensitivityData, VariableUsage } from "../../types";
 
 interface SensitivityRowProps {
   sensitivity: SensitivityData;
+  usage: VariableUsage | null;
   onEdit: (id: number, name: string) => Promise<void>;
-  onDelete: (id: number) => Promise<void>;
+  onDelete: (id: number, name: string) => void;
 }
 
 const SensitivityRow: React.FC<SensitivityRowProps> = ({
   sensitivity,
+  usage,
   onEdit,
   onDelete,
 }) => {
@@ -71,6 +74,9 @@ const SensitivityRow: React.FC<SensitivityRowProps> = ({
         )}
       </td>
       <td className="p-4 sm:p-5 text-center">
+        {!isEditing && <UsageBadge usage={usage} />}
+      </td>
+      <td className="p-4 sm:p-5 text-center">
         {!isEditing && (
           <div className="flex items-center justify-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
             <button
@@ -94,7 +100,7 @@ const SensitivityRow: React.FC<SensitivityRowProps> = ({
               </svg>
             </button>
             <button
-              onClick={() => onDelete(sensitivity.id)}
+              onClick={() => onDelete(sensitivity.id, sensitivity.name)}
               className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
               title="מחק"
             >

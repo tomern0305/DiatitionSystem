@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import AddTextureForm from "./AddTextureForm";
 import TextureRow from "./TextureRow";
+import DeleteVariableDialog from "./DeleteVariableDialog";
+import { useVariableUsage } from "../../hooks/useVariableUsage";
 import Toast from "../layout/Toast";
 import type { ToastType } from "../layout/Toast";
 import type { TextureData } from "../../types";
@@ -38,9 +40,14 @@ const TexturesTableSection = () => {
       });
   };
 
+  // Usage counts + guarded delete flow (dialog replaces window.confirm)
+  const del = useVariableUsage("texture", () => fetchTextures(false));
+
+  const { fetchUsage } = del;
   useEffect(() => {
     fetchTextures();
-  }, []);
+    fetchUsage();
+  }, [fetchUsage]);
 
   const fetchTexturesTable = (showLoader: boolean = true) => {
     if (showLoader) setIsDownloadingTexturesTable(true);
@@ -140,25 +147,6 @@ const TexturesTableSection = () => {
       fetchTextures(false);
     } catch (err: any) {
       alert(`שגיאה בעדכון מרקם: ${err.message}`);
-    }
-  };
-
-  const handleDeleteTexture = async (id: number) => {
-    if (!window.confirm("האם אתה בטוח שברצונך למחוק מרקם זו?")) return;
-
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/texture/${id}`,
-        {
-          method: "DELETE",
-        },
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to delete texture");
-
-      fetchTextures(false);
-    } catch (err: any) {
-      alert(`לא ניתן למחוק: ${err.message}`);
     }
   };
 
@@ -333,6 +321,9 @@ const TexturesTableSection = () => {
               <th className="p-4 font-bold text-gray-600 text-sm w-full">
                 שם מרקם
               </th>
+              <th className="p-4 font-bold text-gray-600 text-sm text-center whitespace-nowrap">
+                בשימוש
+              </th>
               <th className="p-4 font-bold text-gray-600 text-sm text-center">
                 פעולות
               </th>
@@ -343,13 +334,14 @@ const TexturesTableSection = () => {
               <TextureRow
                 key={texture.id}
                 texture={texture}
+                usage={del.getUsage(texture.id)}
                 onEdit={handleEditTextureSubmit}
-                onDelete={handleDeleteTexture}
+                onDelete={del.requestDelete}
               />
             ))}
             {textures.length === 0 && (
               <tr>
-                <td colSpan={2} className="p-8 text-center text-gray-500">
+                <td colSpan={3} className="p-8 text-center text-gray-500">
                   אין מרקמים לבחירה.
                 </td>
               </tr>
@@ -357,6 +349,18 @@ const TexturesTableSection = () => {
           </tbody>
         </table>
       </div>
+
+      {del.pending && (
+        <DeleteVariableDialog
+          itemName={del.pending.name}
+          kindLabel="מרקם"
+          usage={del.pendingUsage}
+          isSubmitting={del.isDeleting}
+          error={del.error}
+          onCancel={del.cancelDelete}
+          onConfirm={del.confirmDelete}
+        />
+      )}
     </div>
   );
 };

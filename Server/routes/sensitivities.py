@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, Response
 import pandas as pd
 from models import db, Sensitivity
+from routes.variable_usage import get_usage_map, safe_delete
 
 sensitivities_bp = Blueprint('sensitivities_bp', __name__)
 
@@ -98,13 +99,17 @@ def update_sensitivity(sens_id):
     db.session.commit()
     return jsonify({"message": "Sensitivity updated"})
 
+@sensitivities_bp.route('/api/sensitivities/usage', methods=['GET'])
+def get_sensitivities_usage():
+    """Returns how many products and meals reference each sensitivity."""
+    return jsonify(get_usage_map('sensitivity', Sensitivity.query.all()))
+
 @sensitivities_bp.route('/api/sensitivities/<int:sens_id>', methods=['DELETE'])
 def delete_sensitivity(sens_id):
-    """Deletes an existing sensitivity from the database."""
+    """Deletes a sensitivity; blocked with 409 while any product or meal uses it."""
     sens = Sensitivity.query.get(sens_id)
     if not sens:
         return jsonify({"error": "Sensitivity not found"}), 404
-        
-    db.session.delete(sens)
-    db.session.commit()
-    return jsonify({"message": "Sensitivity deleted"})
+
+    body, status = safe_delete('sensitivity', sens)
+    return jsonify(body), status

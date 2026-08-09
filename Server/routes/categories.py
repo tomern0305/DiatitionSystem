@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, Response
 import pandas as pd
-from models import db, Category, FoodItem
+from models import db, Category
+from routes.variable_usage import get_usage_map, safe_delete
 
 categories_bp = Blueprint('categories_bp', __name__)
 
@@ -99,16 +100,17 @@ def update_category(cat_id):
     db.session.commit()
     return jsonify({"message": "Category updated"})
 
+@categories_bp.route('/api/categories/usage', methods=['GET'])
+def get_categories_usage():
+    """Returns how many products belong to each category."""
+    return jsonify(get_usage_map('category', Category.query.all()))
+
 @categories_bp.route('/api/categories/<int:cat_id>', methods=['DELETE'])
 def delete_category(cat_id):
-    """Deletes a product category, but only if it contains no products."""
+    """Deletes a category; blocked with 409 while it still holds products."""
     cat = Category.query.get(cat_id)
     if not cat:
         return jsonify({"error": "Category not found"}), 404
-        
-    if FoodItem.query.filter_by(category_id=cat_id).first():
-        return jsonify({"error": "Cannot delete category that contains products"}), 400
-        
-    db.session.delete(cat)
-    db.session.commit()
-    return jsonify({"message": "Category deleted"})
+
+    body, status = safe_delete('category', cat)
+    return jsonify(body), status

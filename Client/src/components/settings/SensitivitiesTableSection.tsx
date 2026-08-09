@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import AddSensitivityForm from "./AddSensitivityForm";
 import SensitivityRow from "./SensitivityRow";
+import DeleteVariableDialog from "./DeleteVariableDialog";
+import { useVariableUsage } from "../../hooks/useVariableUsage";
 import Toast from "../layout/Toast";
 import type { ToastType } from "../layout/Toast";
 import type { SensitivityData } from "../../types";
@@ -38,9 +40,16 @@ const SensitivitiesTableSection = () => {
       });
   };
 
+  // Usage counts + guarded delete flow (dialog replaces window.confirm)
+  const del = useVariableUsage("sensitivities", () =>
+    fetchSensitivities(false),
+  );
+
+  const { fetchUsage } = del;
   useEffect(() => {
     fetchSensitivities();
-  }, []);
+    fetchUsage();
+  }, [fetchUsage]);
 
   const fetchSensitivitiesTable = (showLoader: boolean = true) => {
     if (showLoader) setIsDownloadingSensitivitiesTable(true);
@@ -144,27 +153,6 @@ const SensitivitiesTableSection = () => {
       fetchSensitivities(false);
     } catch (err: any) {
       alert(`שגיאה בעדכון רגישות: ${err.message}`);
-    }
-  };
-
-  const handleDeleteSensitivity = async (id: number) => {
-    if (!window.confirm("האם אתה בטוח שברצונך למחוק רגישות תזונתית זו?"))
-      return;
-
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/sensitivities/${id}`,
-        {
-          method: "DELETE",
-        },
-      );
-      const data = await res.json();
-      if (!res.ok)
-        throw new Error(data.error || "Failed to delete sensitivity");
-
-      fetchSensitivities(false);
-    } catch (err: any) {
-      alert(`לא ניתן למחוק: ${err.message}`);
     }
   };
 
@@ -341,6 +329,9 @@ const SensitivitiesTableSection = () => {
               <th className="p-4 font-bold text-gray-600 text-sm w-full">
                 שם רגישות
               </th>
+              <th className="p-4 font-bold text-gray-600 text-sm text-center whitespace-nowrap">
+                בשימוש
+              </th>
               <th className="p-4 font-bold text-gray-600 text-sm text-center">
                 פעולות
               </th>
@@ -351,13 +342,14 @@ const SensitivitiesTableSection = () => {
               <SensitivityRow
                 key={sens.id}
                 sensitivity={sens}
+                usage={del.getUsage(sens.id)}
                 onEdit={handleEditSensitivitySubmit}
-                onDelete={handleDeleteSensitivity}
+                onDelete={del.requestDelete}
               />
             ))}
             {sensitivities.length === 0 && (
               <tr>
-                <td colSpan={2} className="p-8 text-center text-gray-500">
+                <td colSpan={3} className="p-8 text-center text-gray-500">
                   אין רגישויות או אלרגיות.
                 </td>
               </tr>
@@ -365,6 +357,18 @@ const SensitivitiesTableSection = () => {
           </tbody>
         </table>
       </div>
+
+      {del.pending && (
+        <DeleteVariableDialog
+          itemName={del.pending.name}
+          kindLabel="רגישות"
+          usage={del.pendingUsage}
+          isSubmitting={del.isDeleting}
+          error={del.error}
+          onCancel={del.cancelDelete}
+          onConfirm={del.confirmDelete}
+        />
+      )}
     </div>
   );
 };

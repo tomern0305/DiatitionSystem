@@ -59,6 +59,7 @@ Three-tier system: React SPA → Flask REST API → PostgreSQL (with pgvector).
 - **app.py** — Flask entry point; registers Blueprints and enables CORS
 - **models.py** — SQLAlchemy models: `FoodItem`, `Meal`, `Category`, `Texture`, `Sensitivity`, `Diet`
 - **routes/** — One Blueprint module per resource: `products`, `meals`, `categories`, `sensitivities`, `textures`, `diets`, `system`
+- **routes/variable_usage.py** — Shared usage counting + guarded deletion for the four "variable" tables (categories, sensitivities, textures, diets). See *Variable deletion* below.
 - **scripts/** — Utility scripts: `seed.py` (seed data), `alter_db.py` (schema changes)
 - Database migrations run via `GET /api/run-migrations`
 - Images are stored in **Supabase** cloud storage; `image_url` in `FoodItem` points there
@@ -77,6 +78,17 @@ Three-tier system: React SPA → Flask REST API → PostgreSQL (with pgvector).
 | Health | `/api/status` |
 
 Export (`/api/system/export`) produces a ZIP with CSV files and an `images/` folder; import reverses this.
+
+### Variable deletion (categories / sensitivities / textures / diets)
+
+Deleting a "variable" that products or meals still reference used to orphan data (a deleted sensitivity left its name as a dangling string on products, unreachable by any filter). All four resources now share one policy in `Server/routes/variable_usage.py`:
+
+- `GET /api/<resource>/usage` → `{ id: { products, meals } }` for every row; the settings tables render this as a "בשימוש" column.
+- `DELETE /api/<resource>/<id>` deletes **only** when nothing references the variable. Otherwise it returns **409** with `{ error, usage, message }`.
+- **Deletion never modifies products or meals.** There is no cascade or detach path — no nulling `category_id`/`texture_id`, no stripping names from `contains`/`may_contain`, no deleting products. The user must clear the references themselves first.
+- `FoodItem.properties` is deliberately *not* counted as sensitivity usage: it uses a separate vocabulary (`vegan`, `sugar_free`) that no UI populates from the sensitivities list.
+
+Frontend: `Client/src/hooks/useVariableUsage.ts` drives the flow, `components/settings/DeleteVariableDialog.tsx` is the confirmation modal, `components/settings/UsageBadge.tsx` is the table cell. A missing usage entry means *unknown*, never "not in use".
 
 ### Data Notes
 - `Meal` saves a JSON array of `product_ids` and a nutritional snapshot (totals) at creation time

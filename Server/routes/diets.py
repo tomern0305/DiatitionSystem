@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, Response
 import pandas as pd
 from models import db, Diet
+from routes.variable_usage import get_usage_map, safe_delete
 
 diets_bp = Blueprint('diets_bp', __name__)
 
@@ -98,13 +99,17 @@ def update_diet(diet_id):
     db.session.commit()
     return jsonify({"message": "Diet updated"})
 
+@diets_bp.route('/api/diets/usage', methods=['GET'])
+def get_diets_usage():
+    """Returns how many meals reference each diet."""
+    return jsonify(get_usage_map('diet', Diet.query.all()))
+
 @diets_bp.route('/api/diets/<int:diet_id>', methods=['DELETE'])
 def delete_diet(diet_id):
-    """Deletes an existing diet from the database."""
+    """Deletes a diet; blocked with 409 while any meal is assigned to it."""
     diet = Diet.query.get(diet_id)
     if not diet:
         return jsonify({"error": "Diet not found"}), 404
-        
-    db.session.delete(diet)
-    db.session.commit()
-    return jsonify({"message": "Diet deleted"})
+
+    body, status = safe_delete('diet', diet)
+    return jsonify(body), status

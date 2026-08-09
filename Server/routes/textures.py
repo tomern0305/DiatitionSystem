@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, Response
 import pandas as pd
 from models import db, Texture
+from routes.variable_usage import get_usage_map, safe_delete
 
 textures_bp = Blueprint('textures_bp', __name__)
 
@@ -98,13 +99,17 @@ def update_texture(texture_id):
     db.session.commit()
     return jsonify({"message": "Texture updated"})
 
+@textures_bp.route('/api/texture/usage', methods=['GET'])
+def get_textures_usage():
+    """Returns how many products and meals reference each texture."""
+    return jsonify(get_usage_map('texture', Texture.query.all()))
+
 @textures_bp.route('/api/texture/<int:texture_id>', methods=['DELETE'])
 def delete_texture(texture_id):
-    """Deletes an existing texture from the database."""
+    """Deletes a texture; blocked with 409 while any product or meal uses it."""
     texture = Texture.query.get(texture_id)
     if not texture:
         return jsonify({"error": "Texture not found"}), 404
-        
-    db.session.delete(texture)
-    db.session.commit()
-    return jsonify({"message": "Texture deleted"})
+
+    body, status = safe_delete('texture', texture)
+    return jsonify(body), status

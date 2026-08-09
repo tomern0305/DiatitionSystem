@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import AddCategoryForm from "./AddCategoryForm";
 import CategoryRow from "./CategoryRow";
+import DeleteVariableDialog from "./DeleteVariableDialog";
+import { useVariableUsage } from "../../hooks/useVariableUsage";
 import Toast from "../layout/Toast";
 import type { ToastType } from "../layout/Toast";
 import type { CategoryData } from "../../types";
@@ -38,9 +40,14 @@ const CategoriesTableSection = () => {
       });
   };
 
+  // Usage counts + guarded delete flow (dialog replaces window.confirm)
+  const del = useVariableUsage("categories", () => fetchCategories(false));
+
+  const { fetchUsage } = del;
   useEffect(() => {
     fetchCategories();
-  }, []);
+    fetchUsage();
+  }, [fetchUsage]);
 
   const fetchCategoriesTable = (showLoader: boolean = true) => {
     if (showLoader) setIsDownloadingCategoriesTable(true);
@@ -141,25 +148,6 @@ const CategoriesTableSection = () => {
       fetchCategories(false);
     } catch (err: any) {
       alert(`שגיאה בעדכון קטגוריה: ${err.message}`);
-    }
-  };
-
-  const handleDeleteCategory = async (id: number) => {
-    if (!window.confirm("האם אתה בטוח שברצונך למחוק קטגוריה זו?")) return;
-
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/categories/${id}`,
-        {
-          method: "DELETE",
-        },
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to delete category");
-
-      fetchCategories(false);
-    } catch (err: any) {
-      alert(`לא ניתן למחוק: ${err.message}`);
     }
   };
 
@@ -334,6 +322,9 @@ const CategoriesTableSection = () => {
               <th className="p-4 font-bold text-gray-600 text-sm w-full">
                 שם קטגוריה
               </th>
+              <th className="p-4 font-bold text-gray-600 text-sm text-center whitespace-nowrap">
+                בשימוש
+              </th>
               <th className="p-4 font-bold text-gray-600 text-sm text-center">
                 פעולות
               </th>
@@ -344,13 +335,14 @@ const CategoriesTableSection = () => {
               <CategoryRow
                 key={cat.id}
                 category={cat}
+                usage={del.getUsage(cat.id)}
                 onEdit={handleEditCategorySubmit}
-                onDelete={handleDeleteCategory}
+                onDelete={del.requestDelete}
               />
             ))}
             {categories.length === 0 && (
               <tr>
-                <td colSpan={2} className="p-8 text-center text-gray-500">
+                <td colSpan={3} className="p-8 text-center text-gray-500">
                   אין קטגוריות לשייך למוצרים.
                 </td>
               </tr>
@@ -358,6 +350,18 @@ const CategoriesTableSection = () => {
           </tbody>
         </table>
       </div>
+
+      {del.pending && (
+        <DeleteVariableDialog
+          itemName={del.pending.name}
+          kindLabel="קטגוריה"
+          usage={del.pendingUsage}
+          isSubmitting={del.isDeleting}
+          error={del.error}
+          onCancel={del.cancelDelete}
+          onConfirm={del.confirmDelete}
+        />
+      )}
     </div>
   );
 };

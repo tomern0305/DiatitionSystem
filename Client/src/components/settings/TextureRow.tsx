@@ -1,14 +1,17 @@
 import React, { useState } from "react";
-import type { TextureData } from "../../types";
+import UsageBadge from "./UsageBadge";
+import type { TextureData, VariableUsage } from "../../types";
 
 interface TextureRowProps {
   texture: TextureData;
+  usage: VariableUsage | null;
   onEdit: (id: number, name: string) => Promise<void>;
-  onDelete: (id: number) => Promise<void>;
+  onDelete: (id: number, name: string) => void;
 }
 
 const TextureRow: React.FC<TextureRowProps> = ({
   texture,
+  usage,
   onEdit,
   onDelete,
 }) => {
@@ -71,6 +74,9 @@ const TextureRow: React.FC<TextureRowProps> = ({
         )}
       </td>
       <td className="p-4 sm:p-5 text-center">
+        {!isEditing && <UsageBadge usage={usage} />}
+      </td>
+      <td className="p-4 sm:p-5 text-center">
         {!isEditing && (
           <div className="flex items-center justify-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
             <button
@@ -94,7 +100,7 @@ const TextureRow: React.FC<TextureRowProps> = ({
               </svg>
             </button>
             <button
-              onClick={() => onDelete(texture.id)}
+              onClick={() => onDelete(texture.id, texture.name)}
               className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
               title="מחק"
             >

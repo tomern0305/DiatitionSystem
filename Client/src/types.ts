@@ -55,6 +55,15 @@ export interface TextureData {
   name: string;
 }
 
+/** How many products / saved meals reference a single settings variable. */
+export interface VariableUsage {
+  products: number;
+  meals: number;
+}
+
+/** Usage counts keyed by variable id, as returned by GET /api/<resource>/usage. */
+export type VariableUsageMap = Record<number, VariableUsage>;
+
 /** Represents a saved meal as returned by GET /api/meals and GET /api/meals/:id. */
 export interface MealData {
   id: number;
